@@ -1,0 +1,47 @@
+# WordPress
+*.log
+.htaccess
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*~
+*.swp
+*.swo
+.*.sw[a-z]
+*.bak
+*.tmp
+.phpintel/
+
+# Composer
+/vendor/
+composer.lock
+
+# Node modules (if using any build tools)
+node_modules/
+package-lock.json
+
+# Build files
+*.min.css
+*.min.js
+.sass-cache/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

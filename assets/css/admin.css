@@ -1,0 +1,171 @@
+/**
+ * Admin Styles for Trimontium Private Area
+ */
+
+/* Admin Cards */
+.tpa-admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.tpa-admin-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    padding: 20px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    border-radius: 4px;
+}
+
+.tpa-admin-card h2 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.tpa-admin-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0;
+}
+
+.tpa-admin-card ul li {
+    padding: 8px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.tpa-admin-card ul li:last-child {
+    border-bottom: none;
+}
+
+/* Connection Status */
+#connection-results {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+#connection-results.success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+#connection-results.error {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+/* Tab Navigation */
+.nav-tab-wrapper {
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 20px;
+}
+
+.tab-content {
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-top: none;
+}
+
+/* Status Indicators */
+.status-success {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.status-error {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Widget Configuration */
+#tpa-widgets-container {
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+#tpa-widgets-container h4 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+#tpa-widgets-container code {
+    background: #fff;
+    padding: 2px 6px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+#tpa-widgets-container pre {
+    background: #fff;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* Buttons */
+.tpa-admin-card .button {
+    margin: 5px 0;
+    display: inline-block;
+}
+
+/* Cache Clear Results */
+#cache-clear-results {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+#cache-clear-results.success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+/* Loading State */
+.button.loading {
+    position: relative;
+    color: transparent;
+}
+
+.button.loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid #fff;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* User List Table */
+.wp-list-table .column-private_area {
+    width: 150px;
+    text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 782px) {
+    .tpa-admin-grid {
+        grid-template-columns: 1fr;
+    }
+}
