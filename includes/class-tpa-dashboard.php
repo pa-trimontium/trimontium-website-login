@@ -51,10 +51,12 @@ class TPA_Dashboard {
         add_shortcode('tpa_dashboard', array($this, 'dashboard_shortcode'));
         add_shortcode('tpa_azure_widget', array($this, 'azure_widget_shortcode'));
         add_shortcode('tpa_databricks_widget', array($this, 'databricks_widget_shortcode'));
+        add_shortcode('tpa_databricks_file', array($this, 'databricks_file_shortcode'));
 
         // AJAX handlers for dashboard data
         add_action('wp_ajax_tpa_get_dashboard_data', array($this, 'ajax_get_dashboard_data'));
         add_action('wp_ajax_tpa_refresh_widget', array($this, 'ajax_refresh_widget'));
+        add_action('wp_ajax_tpa_load_databricks_file', array($this, 'ajax_load_databricks_file'));
     }
 
     /**
@@ -283,6 +285,31 @@ class TPA_Dashboard {
     }
 
     /**
+     * Databricks file widget shortcode handler
+     */
+    public function databricks_file_shortcode($atts) {
+        // Check permissions
+        if (!TPA_Roles::user_can_access_databricks()) {
+            return '<div class="tpa-error">' . __('You do not have permission to view Databricks data.', 'trimontium-website-login') . '</div>';
+        }
+
+        $atts = shortcode_atts(array(
+            'file_path' => '',
+            'title' => 'Databricks Data',
+            'height' => '600px',
+            'display' => 'table'  // table, json, or raw
+        ), $atts);
+
+        if (empty($atts['file_path'])) {
+            return '<div class="tpa-error">' . __('File path is required.', 'trimontium-website-login') . '</div>';
+        }
+
+        ob_start();
+        include TPA_PLUGIN_DIR . 'templates/widget-databricks-file.php';
+        return ob_get_clean();
+    }
+
+    /**
      * AJAX handler for getting dashboard data
      */
     public function ajax_get_dashboard_data() {
@@ -322,6 +349,27 @@ class TPA_Dashboard {
             $data = TPA_API::fetch_azure_data($widget_config);
         } elseif ($widget_type === 'databricks') {
             $data = TPA_API::fetch_databricks_data($widget_config);
+        }
+
+        wp_send_json_success($data);
+    }
+
+    /**
+     * AJAX handler for loading Databricks file
+     */
+    public function ajax_load_databricks_file() {
+        TPA_Auth::verify_ajax_nonce();
+
+        $file_path = isset($_POST['file_path']) ? sanitize_text_field($_POST['file_path']) : '';
+
+        if (empty($file_path)) {
+            wp_send_json_error(array('message' => 'File path is required'));
+        }
+
+        $data = TPA_API::read_databricks_file($file_path);
+
+        if (is_wp_error($data)) {
+            wp_send_json_error(array('message' => $data->get_error_message()));
         }
 
         wp_send_json_success($data);

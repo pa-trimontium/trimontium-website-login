@@ -302,6 +302,83 @@ class TPA_API {
     }
 
     /**
+     * Read file from Databricks Volume
+     */
+    public static function read_databricks_file($file_path) {
+        if (empty($file_path)) {
+            return new WP_Error('invalid_path', 'File path is required');
+        }
+
+        $cache_key = 'tpa_dbx_file_' . md5($file_path);
+        $cached_data = get_transient($cache_key);
+
+        if ($cached_data !== false) {
+            return $cached_data;
+        }
+
+        // Use Databricks Files API to read the file
+        // For Unity Catalog Volumes, we need to use the Files API
+        $endpoint = '/api/2.0/fs/files' . $file_path;
+
+        $result = self::databricks_file_request($endpoint);
+
+        if (is_wp_error($result)) {
+            return $result;
+        }
+
+        // Try to decode as JSON
+        $decoded = json_decode($result, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            $data = $decoded;
+        } else {
+            $data = array('content' => $result);
+        }
+
+        set_transient($cache_key, $data, self::CACHE_EXPIRATION);
+
+        return $data;
+    }
+
+    /**
+     * Make Databricks file download request
+     */
+    private static function databricks_file_request($endpoint) {
+        $creds = self::get_databricks_credentials();
+
+        if (empty($creds['workspace_url']) || empty($creds['token'])) {
+            return new WP_Error('missing_credentials', 'Databricks credentials not configured');
+        }
+
+        $url = rtrim($creds['workspace_url'], '') . $endpoint;
+
+        $args = array(
+            'method' => 'GET',
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $creds['token']
+            ),
+            'timeout' => 30
+        );
+
+        $response = wp_remote_request($url, $args);
+
+        if (is_wp_error($response)) {
+            self::log_api_call($endpoint, 'GET', null, $response->get_error_message(), 0);
+            return $response;
+        }
+
+        $status_code = wp_remote_retrieve_response_code($response);
+        $response_body = wp_remote_retrieve_body($response);
+
+        self::log_api_call($endpoint, 'GET', null, substr($response_body, 0, 1000), $status_code);
+
+        if ($status_code >= 400) {
+            return new WP_Error('api_error', 'Databricks file read error: ' . $status_code);
+        }
+
+        return $response_body;
+    }
+
+    /**
      * Log API call to database
      */
     private static function log_api_call($endpoint, $method, $request_data, $response_data, $status_code) {
