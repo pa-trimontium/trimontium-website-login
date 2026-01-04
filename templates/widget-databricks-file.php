@@ -278,7 +278,7 @@ $display = $atts['display'];
                     if (typeof item === 'object' && item !== null) {
                         return formatObjectValue(item);
                     }
-                    return escapeHtml(String(item));
+                    return formatStringWithNewlines(String(item));
                 });
                 return '<ul style="margin: 0; padding-left: 20px;">' +
                        items.map(function(item) { return '<li>' + item + '</li>'; }).join('') +
@@ -289,7 +289,7 @@ $display = $atts['display'];
                 return formatObjectValue(value);
             }
 
-            return escapeHtml(String(value));
+            return formatStringWithNewlines(String(value));
         }
 
         function formatObjectValue(obj) {
@@ -315,7 +315,7 @@ $display = $atts['display'];
                         v = v ? 'Yes' : 'No';
                     }
 
-                    html += '<div style="margin: 3px 0;"><strong>' + escapeHtml(formattedKey) + ':</strong> ' + escapeHtml(String(v)) + '</div>';
+                    html += '<div style="margin: 3px 0;"><strong>' + escapeHtml(formattedKey) + ':</strong> ' + formatStringWithNewlines(String(v)) + '</div>';
                 }
             }
             html += '</div>';
@@ -371,7 +371,7 @@ $display = $atts['display'];
                                                     v = v ? 'Yes' : 'No';
                                                 }
 
-                                                formattedValue += '<div style="margin: 3px 0;"><strong>' + escapeHtml(formattedKey) + ':</strong> ' + escapeHtml(String(v)) + '</div>';
+                                                formattedValue += '<div style="margin: 3px 0;"><strong>' + escapeHtml(formattedKey) + ':</strong> ' + formatStringWithNewlines(String(v)) + '</div>';
                                             }
                                         }
                                         // Add separator between contacts if there are multiple
@@ -379,7 +379,7 @@ $display = $atts['display'];
                                             formattedValue += '<hr style="margin: 8px 0; border: none; border-top: 1px solid #e0e0e0;">';
                                         }
                                     } else {
-                                        formattedValue += '<div>' + escapeHtml(String(contact)) + '</div>';
+                                        formattedValue += '<div>' + formatStringWithNewlines(String(contact)) + '</div>';
                                     }
                                 });
                                 formattedValue += '</div>';
@@ -387,7 +387,7 @@ $display = $atts['display'];
                         } else if (typeof value === 'object') {
                             formattedValue = formatObjectValue(value);
                         } else {
-                            formattedValue = escapeHtml(String(value));
+                            formattedValue = formatStringWithNewlines(String(value));
                         }
                     } else {
                         formattedValue = formatValue(value);
@@ -457,6 +457,13 @@ $display = $atts['display'];
                 "'": '&#039;'
             };
             return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        function formatStringWithNewlines(text) {
+            // First escape HTML to prevent XSS
+            var escaped = escapeHtml(text);
+            // Then convert actual newline characters to <br> tags
+            return escaped.replace(/\n/g, '<br>');
         }
 
         function showError(message) {
