@@ -260,22 +260,137 @@ $display = $atts['display'];
             renderLead(lead);
         }
 
+        function formatValue(value) {
+            if (value === null || value === undefined) {
+                return '-';
+            }
+
+            if (typeof value === 'boolean') {
+                return value ? 'Yes' : 'No';
+            }
+
+            if (Array.isArray(value)) {
+                if (value.length === 0) {
+                    return '-';
+                }
+                // Format array as bulleted list
+                var items = value.map(function(item) {
+                    if (typeof item === 'object' && item !== null) {
+                        return formatObjectValue(item);
+                    }
+                    return escapeHtml(String(item));
+                });
+                return '<ul style="margin: 0; padding-left: 20px;">' +
+                       items.map(function(item) { return '<li>' + item + '</li>'; }).join('') +
+                       '</ul>';
+            }
+
+            if (typeof value === 'object') {
+                return formatObjectValue(value);
+            }
+
+            return escapeHtml(String(value));
+        }
+
+        function formatObjectValue(obj) {
+            if (!obj || Object.keys(obj).length === 0) {
+                return '-';
+            }
+
+            var html = '<div style="padding-left: 10px;">';
+            for (var k in obj) {
+                if (obj.hasOwnProperty(k)) {
+                    var v = obj[k];
+                    var formattedKey = k.replace(/_/g, ' ');
+
+                    if (v === null || v === undefined) {
+                        v = '-';
+                    } else if (typeof v === 'object') {
+                        if (Array.isArray(v)) {
+                            v = v.join(', ');
+                        } else {
+                            v = JSON.stringify(v);
+                        }
+                    } else if (typeof v === 'boolean') {
+                        v = v ? 'Yes' : 'No';
+                    }
+
+                    html += '<div style="margin: 3px 0;"><strong>' + escapeHtml(formattedKey) + ':</strong> ' + escapeHtml(String(v)) + '</div>';
+                }
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function formatCurrency(value) {
+            var num = parseFloat(value);
+            if (isNaN(num)) {
+                return escapeHtml(String(value));
+            }
+            // Round to nearest pound
+            num = Math.round(num);
+            // Add thousand separators
+            var formatted = num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return '£' + formatted;
+        }
+
         function renderLead(lead) {
             var html = '<div class="tpa-lead-card">';
 
             for (var key in lead) {
                 if (lead.hasOwnProperty(key)) {
                     var value = lead[key];
+                    var formattedValue;
 
-                    // Format the value
-                    if (value === null || value === undefined) {
-                        value = '-';
-                    } else if (typeof value === 'object') {
-                        value = JSON.stringify(value, null, 2);
-                    } else if (typeof value === 'boolean') {
-                        value = value ? 'Yes' : 'No';
+                    // Special formatting for specific fields
+                    if (key.toLowerCase() === 'turnover') {
+                        formattedValue = formatCurrency(value);
+                    } else if (key.toLowerCase() === 'contacts') {
+                        // Format contacts without bullet points
+                        if (Array.isArray(value)) {
+                            if (value.length === 0) {
+                                formattedValue = '-';
+                            } else {
+                                formattedValue = '<div style="padding-left: 10px;">';
+                                value.forEach(function(contact) {
+                                    if (typeof contact === 'object' && contact !== null) {
+                                        for (var k in contact) {
+                                            if (contact.hasOwnProperty(k)) {
+                                                var v = contact[k];
+                                                var formattedKey = k.replace(/_/g, ' ');
+
+                                                if (v === null || v === undefined) {
+                                                    v = '-';
+                                                } else if (typeof v === 'object') {
+                                                    if (Array.isArray(v)) {
+                                                        v = v.join(', ');
+                                                    } else {
+                                                        v = JSON.stringify(v);
+                                                    }
+                                                } else if (typeof v === 'boolean') {
+                                                    v = v ? 'Yes' : 'No';
+                                                }
+
+                                                formattedValue += '<div style="margin: 3px 0;"><strong>' + escapeHtml(formattedKey) + ':</strong> ' + escapeHtml(String(v)) + '</div>';
+                                            }
+                                        }
+                                        // Add separator between contacts if there are multiple
+                                        if (value.length > 1) {
+                                            formattedValue += '<hr style="margin: 8px 0; border: none; border-top: 1px solid #e0e0e0;">';
+                                        }
+                                    } else {
+                                        formattedValue += '<div>' + escapeHtml(String(contact)) + '</div>';
+                                    }
+                                });
+                                formattedValue += '</div>';
+                            }
+                        } else if (typeof value === 'object') {
+                            formattedValue = formatObjectValue(value);
+                        } else {
+                            formattedValue = escapeHtml(String(value));
+                        }
                     } else {
-                        value = String(value);
+                        formattedValue = formatValue(value);
                     }
 
                     // Format the key (remove underscores, capitalize)
@@ -283,7 +398,7 @@ $display = $atts['display'];
 
                     html += '<div class="tpa-lead-field">';
                     html += '<div class="tpa-lead-field-label">' + escapeHtml(label) + ':</div>';
-                    html += '<div class="tpa-lead-field-value">' + escapeHtml(value) + '</div>';
+                    html += '<div class="tpa-lead-field-value">' + formattedValue + '</div>';
                     html += '</div>';
                 }
             }
