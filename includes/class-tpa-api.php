@@ -401,30 +401,46 @@ class TPA_API {
      * Log API call to database
      */
     private static function log_api_call($endpoint, $method, $request_data, $response_data, $status_code) {
-        global $wpdb;
+        try {
+            global $wpdb;
 
-        $table_name = $wpdb->prefix . 'tpa_api_logs';
+            $table_name = $wpdb->prefix . 'tpa_api_logs';
 
-        $wpdb->insert(
-            $table_name,
-            array(
-                'user_id' => get_current_user_id(),
-                'api_endpoint' => $endpoint,
-                'request_data' => json_encode($request_data),
-                'response_data' => is_string($response_data) ? $response_data : json_encode($response_data),
-                'status_code' => $status_code
-            ),
-            array('%d', '%s', '%s', '%s', '%d')
-        );
+            // Check if table exists before trying to insert
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'") === $table_name;
+            if (!$table_exists) {
+                error_log('TPA API: Log table does not exist, skipping logging');
+                return;
+            }
 
-        // Clean up old logs (keep last 1000 entries)
-        $wpdb->query(
-            "DELETE FROM $table_name WHERE id NOT IN (
-                SELECT id FROM (
-                    SELECT id FROM $table_name ORDER BY created_at DESC LIMIT 1000
-                ) tmp
-            )"
-        );
+            $result = $wpdb->insert(
+                $table_name,
+                array(
+                    'user_id' => get_current_user_id(),
+                    'api_endpoint' => $endpoint,
+                    'request_data' => json_encode($request_data),
+                    'response_data' => is_string($response_data) ? $response_data : json_encode($response_data),
+                    'status_code' => $status_code
+                ),
+                array('%d', '%s', '%s', '%s', '%d')
+            );
+
+            if ($result === false) {
+                error_log('TPA API: Failed to insert log: ' . $wpdb->last_error);
+            }
+
+            // Clean up old logs (keep last 1000 entries)
+            $wpdb->query(
+                "DELETE FROM $table_name WHERE id NOT IN (
+                    SELECT id FROM (
+                        SELECT id FROM $table_name ORDER BY created_at DESC LIMIT 1000
+                    ) tmp
+                )"
+            );
+        } catch (Exception $e) {
+            error_log('TPA API: Exception in log_api_call: ' . $e->getMessage());
+            // Don't let logging errors break the actual functionality
+        }
     }
 
     /**
