@@ -31,6 +31,7 @@ package-lock.json
 *.min.css
 *.min.js
 .sass-cache/
+*.zip
 
 # Environment files
 .env
