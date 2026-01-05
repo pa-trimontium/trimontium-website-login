@@ -202,6 +202,16 @@ The plugin provides various hooks for extending functionality (see code comments
 2. Use cache clear buttons to reset cached data
 3. Adjust cache duration if needed
 
+## Deployment
+
+### Creating Deployment Package
+
+A .zip version of the plugin is created for uploading to the live WordPress site.
+
+**Naming Convention**: `trimontium-website-login-YYYYMMDD-HHMM.zip` (includes timestamp)
+
+**Note**: The .zip file is excluded from version control (see .gitignore). Create or update the deployment package when changes need to be deployed to production.
+
 ## Development
 
 ### File Structure
