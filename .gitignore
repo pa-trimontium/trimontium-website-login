@@ -32,6 +32,7 @@ package-lock.json
 *.min.js
 .sass-cache/
 *.zip
+.synced
 
 # Environment files
 .env

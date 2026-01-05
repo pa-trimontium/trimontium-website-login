@@ -124,11 +124,30 @@ $display = $atts['display'];
     padding: 40px;
     color: #999;
 }
+
+.tpa-last-updated {
+    font-size: 12px;
+    color: #666;
+    font-weight: normal;
+    margin-left: 10px;
+}
+
+.tpa-widget-footer {
+    padding: 10px 20px;
+    background: #f9f9f9;
+    border-top: 1px solid #e0e0e0;
+    font-size: 11px;
+    color: #999;
+    text-align: right;
+}
 </style>
 
 <div class="tpa-widget tpa-databricks-file-widget tpa-lead-viewer" id="<?php echo esc_attr($widget_id); ?>">
     <div class="tpa-widget-header">
-        <h3 class="tpa-widget-title"><?php echo esc_html($title); ?></h3>
+        <h3 class="tpa-widget-title">
+            <?php echo esc_html($title); ?>
+            <span class="tpa-last-updated" data-timestamp=""></span>
+        </h3>
         <button type="button" class="tpa-widget-refresh" data-widget-id="<?php echo esc_attr($widget_id); ?>">
             <span class="dashicons dashicons-update"></span>
         </button>
@@ -161,6 +180,24 @@ $display = $atts['display'];
             <p class="error-message"></p>
         </div>
     </div>
+
+    <div class="tpa-widget-footer">
+        <?php
+        // Check for .synced file first (created during sync), otherwise use plugin file
+        $sync_file = TPA_PLUGIN_DIR . '.synced';
+        $plugin_file = TPA_PLUGIN_DIR . 'trimontium-website-login.php';
+
+        if (file_exists($sync_file)) {
+            $mod_time = filemtime($sync_file);
+            $formatted_time = date('d M Y H:i:s', $mod_time);
+            echo 'Plugin synced: ' . esc_html($formatted_time);
+        } elseif (file_exists($plugin_file)) {
+            $mod_time = filemtime($plugin_file);
+            $formatted_time = date('d M Y H:i:s', $mod_time);
+            echo 'Plugin code: ' . esc_html($formatted_time);
+        }
+        ?>
+    </div>
 </div>
 
 <script>
@@ -173,6 +210,22 @@ $display = $atts['display'];
 
         var $widget = $('#' + widgetId);
         var $leadNumber = $('#lead-number-' + widgetId);
+
+        // Update timestamp
+        function updateTimestamp() {
+            var now = new Date();
+            var timeString = now.toLocaleTimeString('en-GB', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            var dateString = now.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+            $widget.find('.tpa-last-updated').text('(Last updated: ' + dateString + ' ' + timeString + ')');
+        }
 
         // Load widget data
         function loadFileData() {
@@ -220,6 +273,7 @@ $display = $atts['display'];
                         console.log('Loaded ' + allLeads.length + ' leads');
                         currentIndex = 0;
                         showLead(currentIndex);
+                        updateTimestamp();
                         $widget.find('.tpa-widget-loading').hide();
                         $widget.find('.tpa-widget-content').show();
                     } else {
