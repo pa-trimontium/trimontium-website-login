@@ -306,32 +306,42 @@ class TPA_API {
      */
     public static function read_databricks_file($file_path) {
         if (empty($file_path)) {
+            error_log('TPA API: Empty file path provided');
             return new WP_Error('invalid_path', 'File path is required');
         }
+
+        error_log('TPA API: Reading Databricks file: ' . $file_path);
 
         $cache_key = 'tpa_dbx_file_' . md5($file_path);
         $cached_data = get_transient($cache_key);
 
         if ($cached_data !== false) {
+            error_log('TPA API: Returning cached data');
             return $cached_data;
         }
 
         // Use Databricks Files API to read the file
         // For Unity Catalog Volumes, we need to use the Files API
         $endpoint = '/api/2.0/fs/files' . $file_path;
+        error_log('TPA API: Databricks endpoint: ' . $endpoint);
 
         $result = self::databricks_file_request($endpoint);
 
         if (is_wp_error($result)) {
+            error_log('TPA API: Databricks file request failed: ' . $result->get_error_message());
             return $result;
         }
+
+        error_log('TPA API: File content length: ' . strlen($result));
 
         // Try to decode as JSON
         $decoded = json_decode($result, true);
         if (json_last_error() === JSON_ERROR_NONE) {
             $data = $decoded;
+            error_log('TPA API: Successfully decoded JSON data');
         } else {
             $data = array('content' => $result);
+            error_log('TPA API: File is not JSON, returning as raw content. Error: ' . json_last_error_msg());
         }
 
         set_transient($cache_key, $data, self::CACHE_EXPIRATION);
@@ -346,10 +356,13 @@ class TPA_API {
         $creds = self::get_databricks_credentials();
 
         if (empty($creds['workspace_url']) || empty($creds['token'])) {
+            error_log('TPA API: Databricks credentials missing');
             return new WP_Error('missing_credentials', 'Databricks credentials not configured');
         }
 
         $url = rtrim($creds['workspace_url'], '') . $endpoint;
+        error_log('TPA API: Full Databricks URL: ' . $url);
+        error_log('TPA API: Using token: ' . substr($creds['token'], 0, 10) . '...');
 
         $args = array(
             'method' => 'GET',
@@ -359,9 +372,11 @@ class TPA_API {
             'timeout' => 30
         );
 
+        error_log('TPA API: Making request to Databricks...');
         $response = wp_remote_request($url, $args);
 
         if (is_wp_error($response)) {
+            error_log('TPA API: WP Error: ' . $response->get_error_message());
             self::log_api_call($endpoint, 'GET', null, $response->get_error_message(), 0);
             return $response;
         }
@@ -369,10 +384,14 @@ class TPA_API {
         $status_code = wp_remote_retrieve_response_code($response);
         $response_body = wp_remote_retrieve_body($response);
 
+        error_log('TPA API: Response status code: ' . $status_code);
+        error_log('TPA API: Response body length: ' . strlen($response_body));
+
         self::log_api_call($endpoint, 'GET', null, substr($response_body, 0, 1000), $status_code);
 
         if ($status_code >= 400) {
-            return new WP_Error('api_error', 'Databricks file read error: ' . $status_code);
+            error_log('TPA API: HTTP error ' . $status_code . ': ' . substr($response_body, 0, 200));
+            return new WP_Error('api_error', 'Databricks file read error: ' . $status_code . ' - ' . substr($response_body, 0, 200));
         }
 
         return $response_body;

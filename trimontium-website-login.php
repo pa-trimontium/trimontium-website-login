@@ -150,7 +150,24 @@ class Trimontium_Website_Login {
      * Enqueue frontend assets
      */
     public function enqueue_frontend_assets() {
+        global $post;
+
+        // Check if this is a private area page OR if the page contains our shortcodes
+        $should_enqueue = false;
+
         if (TPA_Auth::is_private_area_page()) {
+            $should_enqueue = true;
+        } elseif ($post && has_shortcode($post->post_content, 'tpa_databricks_file')) {
+            $should_enqueue = true;
+        } elseif ($post && has_shortcode($post->post_content, 'tpa_databricks_widget')) {
+            $should_enqueue = true;
+        } elseif ($post && has_shortcode($post->post_content, 'tpa_azure_widget')) {
+            $should_enqueue = true;
+        } elseif ($post && has_shortcode($post->post_content, 'tpa_dashboard')) {
+            $should_enqueue = true;
+        }
+
+        if ($should_enqueue) {
             wp_enqueue_style(
                 'tpa-frontend',
                 TPA_PLUGIN_URL . 'assets/css/frontend.css',

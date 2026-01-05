@@ -294,8 +294,8 @@ class TPA_Dashboard {
         }
 
         $atts = shortcode_atts(array(
-            'file_path' => '',
-            'title' => 'Databricks Data',
+            'file_path' => '/Volumes/db_trimontium_dev/trimontium-hot-leads/output/leads.json',
+            'title' => 'Lead Viewer',
             'height' => '600px',
             'display' => 'table'  // table, json, or raw
         ), $atts);
@@ -358,20 +358,35 @@ class TPA_Dashboard {
      * AJAX handler for loading Databricks file
      */
     public function ajax_load_databricks_file() {
-        TPA_Auth::verify_ajax_nonce();
+        try {
+            // Verify authentication and permissions
+            TPA_Auth::verify_ajax_nonce();
 
-        $file_path = isset($_POST['file_path']) ? sanitize_text_field($_POST['file_path']) : '';
+            $file_path = isset($_POST['file_path']) ? sanitize_text_field($_POST['file_path']) : '';
 
-        if (empty($file_path)) {
-            wp_send_json_error(array('message' => 'File path is required'));
+            if (empty($file_path)) {
+                wp_send_json_error(array('message' => 'File path is required'));
+                return;
+            }
+
+            // Log the request for debugging
+            error_log('TPA: Loading Databricks file: ' . $file_path);
+
+            // Read the file from Databricks
+            $data = TPA_API::read_databricks_file($file_path);
+
+            if (is_wp_error($data)) {
+                error_log('TPA: Databricks file error: ' . $data->get_error_message());
+                wp_send_json_error(array('message' => $data->get_error_message()));
+                return;
+            }
+
+            error_log('TPA: Successfully loaded Databricks file');
+            wp_send_json_success($data);
+
+        } catch (Exception $e) {
+            error_log('TPA: Exception in ajax_load_databricks_file: ' . $e->getMessage());
+            wp_send_json_error(array('message' => 'Server error: ' . $e->getMessage()));
         }
-
-        $data = TPA_API::read_databricks_file($file_path);
-
-        if (is_wp_error($data)) {
-            wp_send_json_error(array('message' => $data->get_error_message()));
-        }
-
-        wp_send_json_success($data);
     }
 }
