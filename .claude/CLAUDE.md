@@ -26,3 +26,5 @@ A .zip version of the plugin is created for uploading to the live WordPress site
 3. Hard refresh your browser (Ctrl+F5 or Cmd+Shift+R) to see changes
 
 **Note**: Changes made in the WSL directory will NOT automatically appear in your Local WordPress site. You must sync the files using the command above each time you want to test your changes.
+
+If told to 'Sync' it means to do this.

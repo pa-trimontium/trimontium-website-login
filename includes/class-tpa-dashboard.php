@@ -113,7 +113,6 @@ class TPA_Dashboard {
 
         $is_private = get_post_meta($post->ID, '_tpa_is_private', true);
         $dashboard_type = get_post_meta($post->ID, '_tpa_dashboard_type', true);
-        $refresh_interval = get_post_meta($post->ID, '_tpa_refresh_interval', true) ?: '60';
 
         ?>
         <p>
@@ -132,15 +131,6 @@ class TPA_Dashboard {
                 <option value="azure" <?php selected($dashboard_type, 'azure'); ?>><?php _e('Azure', 'trimontium-website-login'); ?></option>
                 <option value="databricks" <?php selected($dashboard_type, 'databricks'); ?>><?php _e('Databricks', 'trimontium-website-login'); ?></option>
             </select>
-        </p>
-
-        <p>
-            <label for="tpa_refresh_interval">
-                <strong><?php _e('Auto-refresh interval (seconds):', 'trimontium-website-login'); ?></strong>
-            </label><br>
-            <input type="number" name="tpa_refresh_interval" id="tpa_refresh_interval"
-                   value="<?php echo esc_attr($refresh_interval); ?>" min="0" step="1" style="width: 100%;">
-            <small><?php _e('Set to 0 to disable auto-refresh', 'trimontium-website-login'); ?></small>
         </p>
         <?php
     }
@@ -203,11 +193,6 @@ class TPA_Dashboard {
         // Save dashboard type
         if (isset($_POST['tpa_dashboard_type'])) {
             update_post_meta($post_id, '_tpa_dashboard_type', sanitize_text_field($_POST['tpa_dashboard_type']));
-        }
-
-        // Save refresh interval
-        if (isset($_POST['tpa_refresh_interval'])) {
-            update_post_meta($post_id, '_tpa_refresh_interval', absint($_POST['tpa_refresh_interval']));
         }
     }
 

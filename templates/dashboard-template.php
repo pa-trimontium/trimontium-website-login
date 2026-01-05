@@ -24,15 +24,6 @@ get_header();
                         <span class="dashicons dashicons-update"></span>
                         <?php _e('Refresh', 'trimontium-website-login'); ?>
                     </button>
-
-                    <?php
-                    $refresh_interval = get_post_meta(get_the_ID(), '_tpa_refresh_interval', true);
-                    if ($refresh_interval > 0) :
-                    ?>
-                        <span class="tpa-auto-refresh-indicator">
-                            <?php printf(__('Auto-refresh: %ds', 'trimontium-website-login'), $refresh_interval); ?>
-                        </span>
-                    <?php endif; ?>
                 </div>
             </header>
 
@@ -46,22 +37,6 @@ get_header();
             </div>
 
         </article>
-
-        <?php
-        // Initialize auto-refresh if configured
-        if ($refresh_interval > 0) :
-        ?>
-        <script>
-        (function($) {
-            var refreshInterval = <?php echo intval($refresh_interval); ?> * 1000;
-            var dashboardId = <?php the_ID(); ?>;
-
-            setInterval(function() {
-                $('.tpa-refresh-button').trigger('click');
-            }, refreshInterval);
-        })(jQuery);
-        </script>
-        <?php endif; ?>
 
     <?php endwhile; ?>
 </div>
