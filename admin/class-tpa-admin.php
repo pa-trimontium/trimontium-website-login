@@ -575,43 +575,74 @@ class TPA_Admin {
      * AJAX: Test file access
      */
     public function ajax_test_file_access() {
-        check_ajax_referer('tpa_diagnostics', '_wpnonce');
+        try {
+            // Check nonce with better error handling
+            $nonce_check = check_ajax_referer('tpa_diagnostics', '_wpnonce', false);
+            if (!$nonce_check) {
+                wp_send_json_error(array(
+                    'message' => 'Security check failed. Please refresh the page and try again.',
+                    'debug' => 'Nonce verification failed'
+                ));
+                return;
+            }
 
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => 'Permission denied'));
-        }
+            if (!current_user_can('manage_options')) {
+                wp_send_json_error(array('message' => 'Permission denied'));
+                return;
+            }
 
-        $file_path = isset($_POST['file_path']) ? sanitize_text_field($_POST['file_path']) : '';
+            $file_path = isset($_POST['file_path']) ? sanitize_text_field($_POST['file_path']) : '';
 
-        if (empty($file_path)) {
-            wp_send_json_error(array('message' => 'File path is required'));
-        }
+            if (empty($file_path)) {
+                wp_send_json_error(array('message' => 'File path is required'));
+                return;
+            }
 
-        // Clear cache first to ensure fresh test
-        TPA_API::clear_cache('databricks');
+            error_log('TPA Diagnostics: Testing file access to: ' . $file_path);
 
-        // Try to read the file
-        $result = TPA_API::read_databricks_file($file_path);
+            // Clear cache first to ensure fresh test
+            TPA_API::clear_cache('databricks');
 
-        if (is_wp_error($result)) {
+            // Try to read the file
+            $result = TPA_API::read_databricks_file($file_path);
+
+            if (is_wp_error($result)) {
+                error_log('TPA Diagnostics: File access failed: ' . $result->get_error_message());
+                wp_send_json_error(array(
+                    'message' => $result->get_error_message(),
+                    'file_path' => $file_path
+                ));
+                return;
+            }
+
+            // Count items if it's an array
+            $count = 0;
+            if (is_array($result)) {
+                $count = count($result);
+            }
+
+            error_log('TPA Diagnostics: Successfully read file with ' . $count . ' items');
+
+            wp_send_json_success(array(
+                'message' => "Successfully read file! Found {$count} items.",
+                'file_path' => $file_path,
+                'item_count' => $count,
+                'sample' => array_slice($result, 0, 1) // First item as sample
+            ));
+
+        } catch (Exception $e) {
+            error_log('TPA Diagnostics: Exception: ' . $e->getMessage());
             wp_send_json_error(array(
-                'message' => $result->get_error_message(),
-                'file_path' => $file_path
+                'message' => 'Server error: ' . $e->getMessage(),
+                'debug' => $e->getTraceAsString()
+            ));
+        } catch (Error $e) {
+            error_log('TPA Diagnostics: Fatal error: ' . $e->getMessage());
+            wp_send_json_error(array(
+                'message' => 'Fatal error: ' . $e->getMessage(),
+                'debug' => $e->getTraceAsString()
             ));
         }
-
-        // Count items if it's an array
-        $count = 0;
-        if (is_array($result)) {
-            $count = count($result);
-        }
-
-        wp_send_json_success(array(
-            'message' => "Successfully read file! Found {$count} items.",
-            'file_path' => $file_path,
-            'item_count' => $count,
-            'sample' => array_slice($result, 0, 1) // First item as sample
-        ));
     }
 
     /**
