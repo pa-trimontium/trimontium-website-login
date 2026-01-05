@@ -47,6 +47,7 @@ class TPA_Admin {
         add_action('wp_ajax_tpa_test_azure_connection', array($this, 'ajax_test_azure_connection'));
         add_action('wp_ajax_tpa_test_databricks_connection', array($this, 'ajax_test_databricks_connection'));
         add_action('wp_ajax_tpa_clear_cache', array($this, 'ajax_clear_cache'));
+        add_action('wp_ajax_tpa_test_file_access', array($this, 'ajax_test_file_access'));
 
         // Add user role column
         add_filter('manage_users_columns', array($this, 'add_user_columns'));
@@ -105,6 +106,15 @@ class TPA_Admin {
             'manage_options',
             'trimontium-website-login-logs',
             array($this, 'render_logs_page')
+        );
+
+        add_submenu_page(
+            'trimontium-website-login',
+            __('Diagnostics', 'trimontium-website-login'),
+            __('Diagnostics', 'trimontium-website-login'),
+            'manage_options',
+            'trimontium-website-login-diagnostics',
+            array($this, 'render_diagnostics_page')
         );
     }
 
@@ -562,6 +572,49 @@ class TPA_Admin {
     }
 
     /**
+     * AJAX: Test file access
+     */
+    public function ajax_test_file_access() {
+        check_ajax_referer('tpa_diagnostics', '_wpnonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+        }
+
+        $file_path = isset($_POST['file_path']) ? sanitize_text_field($_POST['file_path']) : '';
+
+        if (empty($file_path)) {
+            wp_send_json_error(array('message' => 'File path is required'));
+        }
+
+        // Clear cache first to ensure fresh test
+        TPA_API::clear_cache('databricks');
+
+        // Try to read the file
+        $result = TPA_API::read_databricks_file($file_path);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array(
+                'message' => $result->get_error_message(),
+                'file_path' => $file_path
+            ));
+        }
+
+        // Count items if it's an array
+        $count = 0;
+        if (is_array($result)) {
+            $count = count($result);
+        }
+
+        wp_send_json_success(array(
+            'message' => "Successfully read file! Found {$count} items.",
+            'file_path' => $file_path,
+            'item_count' => $count,
+            'sample' => array_slice($result, 0, 1) // First item as sample
+        ));
+    }
+
+    /**
      * Add user columns
      */
     public function add_user_columns($columns) {
@@ -607,5 +660,202 @@ class TPA_Admin {
         }
 
         return $redirect_url;
+    }
+
+    /**
+     * Render diagnostics page
+     */
+    public function render_diagnostics_page() {
+        global $wpdb;
+
+        ?>
+        <div class="wrap">
+            <h1><?php _e('System Diagnostics', 'trimontium-website-login'); ?></h1>
+            <p><?php _e('This page helps diagnose issues with the plugin.', 'trimontium-website-login'); ?></p>
+
+            <div class="card" style="max-width: 1000px;">
+                <h2>Environment Information</h2>
+                <table class="widefat striped">
+                    <tbody>
+                        <tr>
+                            <td><strong>PHP Version</strong></td>
+                            <td><?php echo phpversion(); ?></td>
+                        </tr>
+                        <tr>
+                            <td><strong>WordPress Version</strong></td>
+                            <td><?php echo get_bloginfo('version'); ?></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Plugin Version</strong></td>
+                            <td><?php echo TPA_VERSION; ?></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Site URL</strong></td>
+                            <td><?php echo get_site_url(); ?></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card" style="max-width: 1000px; margin-top: 20px;">
+                <h2>Database Check</h2>
+                <?php
+                $table_name = $wpdb->prefix . 'tpa_api_logs';
+                $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'") === $table_name;
+                ?>
+                <table class="widefat striped">
+                    <tbody>
+                        <tr>
+                            <td><strong>API Logs Table</strong></td>
+                            <td>
+                                <?php if ($table_exists): ?>
+                                    <span style="color: green;">✓ Exists</span>
+                                <?php else: ?>
+                                    <span style="color: red;">✗ Missing - Try deactivating and reactivating the plugin</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <?php if ($table_exists): ?>
+                        <tr>
+                            <td><strong>Log Entry Count</strong></td>
+                            <td><?php echo $wpdb->get_var("SELECT COUNT(*) FROM $table_name"); ?> entries</td>
+                        </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card" style="max-width: 1000px; margin-top: 20px;">
+                <h2>Databricks Configuration</h2>
+                <?php
+                $workspace_url = get_option('tpa_databricks_workspace_url', '');
+                $token = get_option('tpa_databricks_token', '');
+                $file_path = '/Volumes/db_trimontium_dev/trimontium-hot-leads/output/leads.json';
+                ?>
+                <table class="widefat striped">
+                    <tbody>
+                        <tr>
+                            <td><strong>Workspace URL</strong></td>
+                            <td>
+                                <?php if (!empty($workspace_url)): ?>
+                                    <span style="color: green;">✓ Configured:</span> <?php echo esc_html($workspace_url); ?>
+                                <?php else: ?>
+                                    <span style="color: red;">✗ Not configured</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Access Token</strong></td>
+                            <td>
+                                <?php if (!empty($token)): ?>
+                                    <span style="color: green;">✓ Configured:</span> <?php echo esc_html(substr($token, 0, 15)); ?>...
+                                <?php else: ?>
+                                    <span style="color: red;">✗ Not configured</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Default File Path</strong></td>
+                            <td><?php echo esc_html($file_path); ?></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <?php if (!empty($workspace_url) && !empty($token)): ?>
+                    <h3 style="margin-top: 20px;">Connection Test</h3>
+                    <button type="button" class="button button-primary" id="test-databricks-file">
+                        Test Databricks File Access
+                    </button>
+                    <div id="test-result" style="margin-top: 15px;"></div>
+
+                    <script>
+                    jQuery(document).ready(function($) {
+                        $('#test-databricks-file').on('click', function() {
+                            var $button = $(this);
+                            var $result = $('#test-result');
+
+                            $button.prop('disabled', true).text('Testing...');
+                            $result.html('<p>Testing connection to Databricks...</p>');
+
+                            $.ajax({
+                                url: ajaxurl,
+                                type: 'POST',
+                                data: {
+                                    action: 'tpa_test_file_access',
+                                    file_path: '<?php echo esc_js($file_path); ?>',
+                                    _wpnonce: '<?php echo wp_create_nonce('tpa_diagnostics'); ?>'
+                                },
+                                success: function(response) {
+                                    if (response.success) {
+                                        $result.html(
+                                            '<div class="notice notice-success inline"><p>' +
+                                            '<strong>Success!</strong> ' + response.data.message +
+                                            '</p></div>'
+                                        );
+                                    } else {
+                                        $result.html(
+                                            '<div class="notice notice-error inline"><p>' +
+                                            '<strong>Error:</strong> ' + response.data.message +
+                                            '</p></div>'
+                                        );
+                                    }
+                                },
+                                error: function(xhr) {
+                                    $result.html(
+                                        '<div class="notice notice-error inline"><p>' +
+                                        '<strong>HTTP Error:</strong> ' + xhr.status + ' - ' + xhr.statusText +
+                                        '</p></div>'
+                                    );
+                                },
+                                complete: function() {
+                                    $button.prop('disabled', false).text('Test Databricks File Access');
+                                }
+                            });
+                        });
+                    });
+                    </script>
+                <?php endif; ?>
+            </div>
+
+            <div class="card" style="max-width: 1000px; margin-top: 20px;">
+                <h2>Recent Error Logs (Last 10)</h2>
+                <?php if ($table_exists): ?>
+                    <?php
+                    $logs = $wpdb->get_results(
+                        "SELECT * FROM $table_name WHERE status_code >= 400 OR status_code = 0 ORDER BY created_at DESC LIMIT 10"
+                    );
+                    ?>
+                    <?php if ($logs): ?>
+                        <table class="widefat striped">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Endpoint</th>
+                                    <th>Status</th>
+                                    <th>Response</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($logs as $log): ?>
+                                <tr>
+                                    <td><?php echo esc_html($log->created_at); ?></td>
+                                    <td><?php echo esc_html($log->api_endpoint); ?></td>
+                                    <td><?php echo esc_html($log->status_code); ?></td>
+                                    <td style="font-size: 11px; max-width: 400px; overflow: hidden; text-overflow: ellipsis;">
+                                        <?php echo esc_html(substr($log->response_data, 0, 200)); ?>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    <?php else: ?>
+                        <p>No error logs found.</p>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <p style="color: red;">Cannot display logs - database table does not exist.</p>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
     }
 }
