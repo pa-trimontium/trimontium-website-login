@@ -48,6 +48,7 @@ class TPA_Admin {
         add_action('wp_ajax_tpa_test_databricks_connection', array($this, 'ajax_test_databricks_connection'));
         add_action('wp_ajax_tpa_clear_cache', array($this, 'ajax_clear_cache'));
         add_action('wp_ajax_tpa_test_file_access', array($this, 'ajax_test_file_access'));
+        add_action('wp_ajax_tpa_clear_diagnostic_log', array($this, 'ajax_clear_diagnostic_log'));
 
         // Add user role column
         add_filter('manage_users_columns', array($this, 'add_user_columns'));
@@ -576,9 +577,19 @@ class TPA_Admin {
      */
     public function ajax_test_file_access() {
         try {
+            $this->log_diagnostic_error('=== Starting File Access Test ===');
+
+            // Check if TPA_API class exists
+            if (!class_exists('TPA_API')) {
+                throw new Exception('TPA_API class not found - plugin may not be fully loaded');
+            }
+
+            $this->log_diagnostic_error('TPA_API class exists');
+
             // Check nonce with better error handling
             $nonce_check = check_ajax_referer('tpa_diagnostics', '_wpnonce', false);
             if (!$nonce_check) {
+                $this->log_diagnostic_error('Nonce verification failed');
                 wp_send_json_error(array(
                     'message' => 'Security check failed. Please refresh the page and try again.',
                     'debug' => 'Nonce verification failed'
@@ -586,30 +597,53 @@ class TPA_Admin {
                 return;
             }
 
+            $this->log_diagnostic_error('Nonce verified');
+
             if (!current_user_can('manage_options')) {
+                $this->log_diagnostic_error('Permission denied for user');
                 wp_send_json_error(array('message' => 'Permission denied'));
                 return;
             }
 
+            $this->log_diagnostic_error('Permissions OK');
+
             $file_path = isset($_POST['file_path']) ? sanitize_text_field($_POST['file_path']) : '';
 
             if (empty($file_path)) {
+                $this->log_diagnostic_error('No file path provided');
                 wp_send_json_error(array('message' => 'File path is required'));
                 return;
             }
 
-            error_log('TPA Diagnostics: Testing file access to: ' . $file_path);
+            $this->log_diagnostic_error('Testing file access to: ' . $file_path);
+
+            // Check Databricks credentials
+            $workspace_url = get_option('tpa_databricks_workspace_url', '');
+            $token = get_option('tpa_databricks_token', '');
+
+            if (empty($workspace_url) || empty($token)) {
+                $this->log_diagnostic_error('Databricks credentials not configured');
+                wp_send_json_error(array(
+                    'message' => 'Databricks credentials not configured. Please check settings.',
+                    'debug' => 'Missing workspace URL or token'
+                ));
+                return;
+            }
+
+            $this->log_diagnostic_error('Credentials found: ' . substr($workspace_url, 0, 30) . '...');
 
             // Clear cache first to ensure fresh test
             TPA_API::clear_cache('databricks');
+            $this->log_diagnostic_error('Cache cleared');
 
             // Try to read the file
             $result = TPA_API::read_databricks_file($file_path);
 
             if (is_wp_error($result)) {
-                error_log('TPA Diagnostics: File access failed: ' . $result->get_error_message());
+                $error_msg = $result->get_error_message();
+                $this->log_diagnostic_error('File access failed: ' . $error_msg);
                 wp_send_json_error(array(
-                    'message' => $result->get_error_message(),
+                    'message' => $error_msg,
                     'file_path' => $file_path
                 ));
                 return;
@@ -621,7 +655,8 @@ class TPA_Admin {
                 $count = count($result);
             }
 
-            error_log('TPA Diagnostics: Successfully read file with ' . $count . ' items');
+            $this->log_diagnostic_error('Successfully read file with ' . $count . ' items');
+            $this->log_diagnostic_error('=== Test Complete - Success ===');
 
             wp_send_json_success(array(
                 'message' => "Successfully read file! Found {$count} items.",
@@ -631,18 +666,46 @@ class TPA_Admin {
             ));
 
         } catch (Exception $e) {
-            error_log('TPA Diagnostics: Exception: ' . $e->getMessage());
+            $error_msg = 'Exception: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine();
+            $this->log_diagnostic_error($error_msg);
+            $this->log_diagnostic_error('Stack trace: ' . $e->getTraceAsString());
             wp_send_json_error(array(
                 'message' => 'Server error: ' . $e->getMessage(),
-                'debug' => $e->getTraceAsString()
-            ));
-        } catch (Error $e) {
-            error_log('TPA Diagnostics: Fatal error: ' . $e->getMessage());
-            wp_send_json_error(array(
-                'message' => 'Fatal error: ' . $e->getMessage(),
-                'debug' => $e->getTraceAsString()
+                'debug' => $e->getFile() . ':' . $e->getLine(),
+                'trace' => explode("\n", $e->getTraceAsString())
             ));
         }
+    }
+
+    /**
+     * Log diagnostic error to database option
+     */
+    private function log_diagnostic_error($message) {
+        $log = get_option('tpa_diagnostic_log', array());
+        $log[] = array(
+            'time' => current_time('mysql'),
+            'message' => $message
+        );
+        // Keep only last 100 entries
+        if (count($log) > 100) {
+            $log = array_slice($log, -100);
+        }
+        update_option('tpa_diagnostic_log', $log, false);
+    }
+
+    /**
+     * AJAX: Clear diagnostic log
+     */
+    public function ajax_clear_diagnostic_log() {
+        check_ajax_referer('tpa_diagnostics', '_wpnonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+            return;
+        }
+
+        delete_option('tpa_diagnostic_log');
+        wp_send_json_success(array('message' => 'Diagnostic log cleared'));
     }
 
     /**
@@ -885,6 +948,65 @@ class TPA_Admin {
                 <?php else: ?>
                     <p style="color: red;">Cannot display logs - database table does not exist.</p>
                 <?php endif; ?>
+            </div>
+
+            <div class="card" style="max-width: 1000px; margin-top: 20px;">
+                <h2>Diagnostic Log (Real-time Debugging)</h2>
+                <p style="margin-bottom: 15px;">
+                    This log shows detailed step-by-step information when you click "Test Databricks File Access" button above.
+                    <button type="button" class="button" id="clear-diagnostic-log" style="margin-left: 10px;">Clear Log</button>
+                    <button type="button" class="button" id="refresh-diagnostic-log" style="margin-left: 5px;">Refresh</button>
+                </p>
+                <?php
+                $diagnostic_log = get_option('tpa_diagnostic_log', array());
+                ?>
+                <div id="diagnostic-log-content" style="background: #f5f5f5; padding: 15px; border: 1px solid #ddd; max-height: 500px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+                    <?php if (!empty($diagnostic_log)): ?>
+                        <?php foreach (array_reverse($diagnostic_log) as $entry): ?>
+                            <div style="margin-bottom: 5px; padding: 5px; background: white; border-left: 3px solid #0073aa;">
+                                <strong style="color: #666;"><?php echo esc_html($entry['time']); ?></strong>
+                                <span style="margin-left: 10px;"><?php echo esc_html($entry['message']); ?></span>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <p style="color: #666;">No diagnostic logs yet. Click "Test Databricks File Access" button above to generate logs.</p>
+                    <?php endif; ?>
+                </div>
+
+                <script>
+                jQuery(document).ready(function($) {
+                    $('#clear-diagnostic-log').on('click', function() {
+                        if (confirm('Are you sure you want to clear the diagnostic log?')) {
+                            $.ajax({
+                                url: ajaxurl,
+                                type: 'POST',
+                                data: {
+                                    action: 'tpa_clear_diagnostic_log',
+                                    _wpnonce: '<?php echo wp_create_nonce('tpa_diagnostics'); ?>'
+                                },
+                                success: function(response) {
+                                    if (response.success) {
+                                        $('#diagnostic-log-content').html('<p style="color: #666;">Log cleared. Click "Test Databricks File Access" button above to generate new logs.</p>');
+                                    }
+                                }
+                            });
+                        }
+                    });
+
+                    $('#refresh-diagnostic-log').on('click', function() {
+                        location.reload();
+                    });
+
+                    // Auto-refresh log after test completes
+                    $(document).on('ajaxComplete', function(event, xhr, settings) {
+                        if (settings.data && settings.data.indexOf('tpa_test_file_access') !== -1) {
+                            setTimeout(function() {
+                                location.reload();
+                            }, 1000);
+                        }
+                    });
+                });
+                </script>
             </div>
         </div>
         <?php

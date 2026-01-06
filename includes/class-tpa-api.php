@@ -302,49 +302,78 @@ class TPA_API {
     }
 
     /**
+     * Helper: Add diagnostic log entry
+     */
+    private static function add_diagnostic_log($message) {
+        $log = get_option('tpa_diagnostic_log', array());
+        $log[] = array(
+            'time' => current_time('mysql'),
+            'message' => $message
+        );
+        if (count($log) > 100) {
+            $log = array_slice($log, -100);
+        }
+        update_option('tpa_diagnostic_log', $log, false);
+    }
+
+    /**
      * Read file from Databricks Volume
      */
     public static function read_databricks_file($file_path) {
+        self::add_diagnostic_log('API: Starting read_databricks_file');
+
         if (empty($file_path)) {
+            self::add_diagnostic_log('API: Empty file path provided');
             error_log('TPA API: Empty file path provided');
             return new WP_Error('invalid_path', 'File path is required');
         }
 
+        self::add_diagnostic_log('API: File path: ' . $file_path);
         error_log('TPA API: Reading Databricks file: ' . $file_path);
 
         $cache_key = 'tpa_dbx_file_' . md5($file_path);
         $cached_data = get_transient($cache_key);
 
         if ($cached_data !== false) {
+            self::add_diagnostic_log('API: Returning cached data');
             error_log('TPA API: Returning cached data');
             return $cached_data;
         }
 
+        self::add_diagnostic_log('API: No cache, making fresh request');
+
         // Use Databricks Files API to read the file
         // For Unity Catalog Volumes, we need to use the Files API
         $endpoint = '/api/2.0/fs/files' . $file_path;
+        self::add_diagnostic_log('API: Endpoint: ' . $endpoint);
         error_log('TPA API: Databricks endpoint: ' . $endpoint);
 
         $result = self::databricks_file_request($endpoint);
 
         if (is_wp_error($result)) {
-            error_log('TPA API: Databricks file request failed: ' . $result->get_error_message());
+            $error_msg = $result->get_error_message();
+            self::add_diagnostic_log('API: Request failed: ' . $error_msg);
+            error_log('TPA API: Databricks file request failed: ' . $error_msg);
             return $result;
         }
 
+        self::add_diagnostic_log('API: Request succeeded, content length: ' . strlen($result));
         error_log('TPA API: File content length: ' . strlen($result));
 
         // Try to decode as JSON
         $decoded = json_decode($result, true);
         if (json_last_error() === JSON_ERROR_NONE) {
             $data = $decoded;
+            self::add_diagnostic_log('API: Successfully decoded JSON with ' . count($data) . ' items');
             error_log('TPA API: Successfully decoded JSON data');
         } else {
             $data = array('content' => $result);
+            self::add_diagnostic_log('API: Not JSON, returning raw content');
             error_log('TPA API: File is not JSON, returning as raw content. Error: ' . json_last_error_msg());
         }
 
         set_transient($cache_key, $data, self::CACHE_EXPIRATION);
+        self::add_diagnostic_log('API: Data cached and returning');
 
         return $data;
     }
@@ -353,14 +382,19 @@ class TPA_API {
      * Make Databricks file download request
      */
     private static function databricks_file_request($endpoint) {
+        self::add_diagnostic_log('API: Starting databricks_file_request');
+
         $creds = self::get_databricks_credentials();
 
         if (empty($creds['workspace_url']) || empty($creds['token'])) {
+            self::add_diagnostic_log('API: Credentials missing');
             error_log('TPA API: Databricks credentials missing');
             return new WP_Error('missing_credentials', 'Databricks credentials not configured');
         }
 
         $url = rtrim($creds['workspace_url'], '') . $endpoint;
+        self::add_diagnostic_log('API: Full URL: ' . $url);
+        self::add_diagnostic_log('API: Token present: ' . (strlen($creds['token']) > 0 ? 'yes' : 'no'));
         error_log('TPA API: Full Databricks URL: ' . $url);
         error_log('TPA API: Using token: ' . substr($creds['token'], 0, 10) . '...');
 
@@ -372,28 +406,36 @@ class TPA_API {
             'timeout' => 30
         );
 
+        self::add_diagnostic_log('API: Making HTTP request to Databricks...');
         error_log('TPA API: Making request to Databricks...');
         $response = wp_remote_request($url, $args);
 
         if (is_wp_error($response)) {
-            error_log('TPA API: WP Error: ' . $response->get_error_message());
-            self::log_api_call($endpoint, 'GET', null, $response->get_error_message(), 0);
+            $error_msg = $response->get_error_message();
+            self::add_diagnostic_log('API: wp_remote_request error: ' . $error_msg);
+            error_log('TPA API: WP Error: ' . $error_msg);
+            self::log_api_call($endpoint, 'GET', null, $error_msg, 0);
             return $response;
         }
 
         $status_code = wp_remote_retrieve_response_code($response);
         $response_body = wp_remote_retrieve_body($response);
 
+        self::add_diagnostic_log('API: HTTP status code: ' . $status_code);
+        self::add_diagnostic_log('API: Response body length: ' . strlen($response_body));
         error_log('TPA API: Response status code: ' . $status_code);
         error_log('TPA API: Response body length: ' . strlen($response_body));
 
         self::log_api_call($endpoint, 'GET', null, substr($response_body, 0, 1000), $status_code);
 
         if ($status_code >= 400) {
-            error_log('TPA API: HTTP error ' . $status_code . ': ' . substr($response_body, 0, 200));
-            return new WP_Error('api_error', 'Databricks file read error: ' . $status_code . ' - ' . substr($response_body, 0, 200));
+            $error_detail = substr($response_body, 0, 200);
+            self::add_diagnostic_log('API: HTTP error ' . $status_code . ': ' . $error_detail);
+            error_log('TPA API: HTTP error ' . $status_code . ': ' . $error_detail);
+            return new WP_Error('api_error', 'Databricks file read error: ' . $status_code . ' - ' . $error_detail);
         }
 
+        self::add_diagnostic_log('API: Request completed successfully');
         return $response_body;
     }
 

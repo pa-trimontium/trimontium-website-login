@@ -65,10 +65,6 @@ class Trimontium_Website_Login {
      * Define WordPress hooks
      */
     private function define_hooks() {
-        // Activation/Deactivation
-        register_activation_hook(__FILE__, array($this, 'activate'));
-        register_deactivation_hook(__FILE__, array($this, 'deactivate'));
-
         // Initialize components
         add_action('plugins_loaded', array($this, 'init'));
 
@@ -97,53 +93,6 @@ class Trimontium_Website_Login {
         if (is_admin()) {
             TPA_Admin::get_instance();
         }
-    }
-
-    /**
-     * Plugin activation
-     */
-    public function activate() {
-        // Create custom role and capabilities
-        TPA_Roles::create_private_area_role();
-
-        // Create database tables if needed
-        $this->create_tables();
-
-        // Flush rewrite rules
-        flush_rewrite_rules();
-    }
-
-    /**
-     * Plugin deactivation
-     */
-    public function deactivate() {
-        // Flush rewrite rules
-        flush_rewrite_rules();
-    }
-
-    /**
-     * Create custom database tables
-     */
-    private function create_tables() {
-        global $wpdb;
-
-        $charset_collate = $wpdb->get_charset_collate();
-        $table_name = $wpdb->prefix . 'tpa_api_logs';
-
-        $sql = "CREATE TABLE IF NOT EXISTS $table_name (
-            id bigint(20) NOT NULL AUTO_INCREMENT,
-            user_id bigint(20) NOT NULL,
-            api_endpoint varchar(255) NOT NULL,
-            request_data longtext,
-            response_data longtext,
-            status_code int(11),
-            created_at datetime DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY  (id),
-            KEY user_id (user_id)
-        ) $charset_collate;";
-
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-        dbDelta($sql);
     }
 
     /**
@@ -214,6 +163,52 @@ class Trimontium_Website_Login {
         }
     }
 }
+
+/**
+ * Plugin activation callback
+ */
+function trimontium_website_login_activate() {
+    // Load dependencies first
+    require_once TPA_PLUGIN_DIR . 'includes/class-tpa-roles.php';
+
+    // Create custom role and capabilities
+    TPA_Roles::create_private_area_role();
+
+    // Create database tables
+    global $wpdb;
+    $charset_collate = $wpdb->get_charset_collate();
+    $table_name = $wpdb->prefix . 'tpa_api_logs';
+
+    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        user_id bigint(20) NOT NULL,
+        api_endpoint varchar(255) NOT NULL,
+        request_data longtext,
+        response_data longtext,
+        status_code int(11),
+        created_at datetime DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY  (id),
+        KEY user_id (user_id)
+    ) $charset_collate;";
+
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+    dbDelta($sql);
+
+    // Flush rewrite rules
+    flush_rewrite_rules();
+}
+
+/**
+ * Plugin deactivation callback
+ */
+function trimontium_website_login_deactivate() {
+    // Flush rewrite rules
+    flush_rewrite_rules();
+}
+
+// Register activation/deactivation hooks
+register_activation_hook(__FILE__, 'trimontium_website_login_activate');
+register_deactivation_hook(__FILE__, 'trimontium_website_login_deactivate');
 
 // Initialize the plugin
 function trimontium_website_login() {

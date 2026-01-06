@@ -20,6 +20,8 @@
 
 If told to 'Sync' it means to do this process.
 
+When making changes to this plugin project, always test it using the Local WP site before testing on the live deployment.
+
 ## Deployment
 
 ### Creating Deployment Package
@@ -28,6 +30,20 @@ A .zip version of the plugin is created for uploading to the live WordPress site
 
 **Naming Convention**: `trimontium-website-login-YYYYMMDD-HHMM.zip` (includes timestamp)
 
-**Note**: The .zip file is excluded from version control (see .gitignore). Create or update the deployment package when changes need to be deployed to production.
+**Note**: The .zip file is excluded from version control (see .gitignore). When  instructed to create the deployment .zip package inside the project folder to keep all the files together.
 
 If told to 'Prod' it means to do this process.
+
+## Test and Live website environments
+
+### PHP and WordPress versions
+
+The PHP and WP version of the Local test site is:
+
+PHP Version 8.2.27
+WordPress Version 6.9
+
+The live site is:
+
+PHP version	8.2.29
+WordPress Version 6.9
