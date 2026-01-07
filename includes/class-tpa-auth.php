@@ -139,12 +139,12 @@ class TPA_Auth {
      */
     private function show_access_denied($message = null) {
         if (!$message) {
-            $message = __('You do not have permission to access this page.', 'trimontium-website-login');
+            $message = __('You do not have permission to access this page.', 'trimontium-wp-private-dashboards');
         }
 
         wp_die(
             esc_html($message),
-            __('Access Denied', 'trimontium-website-login'),
+            __('Access Denied', 'trimontium-wp-private-dashboards'),
             array(
                 'response' => 403,
                 'back_link' => true
@@ -182,7 +182,7 @@ class TPA_Auth {
             if (!is_user_logged_in()) {
                 return new WP_Error(
                     'rest_not_logged_in',
-                    __('You are not currently logged in.', 'trimontium-website-login'),
+                    __('You are not currently logged in.', 'trimontium-wp-private-dashboards'),
                     array('status' => 401)
                 );
             }
@@ -190,7 +190,7 @@ class TPA_Auth {
             if (!TPA_Roles::user_can_access_private_area()) {
                 return new WP_Error(
                     'rest_forbidden',
-                    __('You do not have permission to access this resource.', 'trimontium-website-login'),
+                    __('You do not have permission to access this resource.', 'trimontium-wp-private-dashboards'),
                     array('status' => 403)
                 );
             }
@@ -236,21 +236,21 @@ class TPA_Auth {
     public static function verify_ajax_nonce() {
         if (!check_ajax_referer('tpa_ajax_nonce', 'nonce', false)) {
             wp_send_json_error(array(
-                'message' => __('Security check failed.', 'trimontium-website-login')
+                'message' => __('Security check failed.', 'trimontium-wp-private-dashboards')
             ), 403);
             exit;
         }
 
         if (!is_user_logged_in()) {
             wp_send_json_error(array(
-                'message' => __('You must be logged in.', 'trimontium-website-login')
+                'message' => __('You must be logged in.', 'trimontium-wp-private-dashboards')
             ), 401);
             exit;
         }
 
         if (!TPA_Roles::user_can_access_private_area()) {
             wp_send_json_error(array(
-                'message' => __('You do not have permission to perform this action.', 'trimontium-website-login')
+                'message' => __('You do not have permission to perform this action.', 'trimontium-wp-private-dashboards')
             ), 403);
             exit;
         }

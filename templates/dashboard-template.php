@@ -22,7 +22,7 @@ get_header();
                 <div class="tpa-dashboard-actions">
                     <button type="button" class="tpa-refresh-button" data-dashboard-id="<?php the_ID(); ?>">
                         <span class="dashicons dashicons-update"></span>
-                        <?php _e('Refresh', 'trimontium-website-login'); ?>
+                        <?php _e('Refresh', 'trimontium-wp-private-dashboards'); ?>
                     </button>
                 </div>
             </header>
@@ -33,7 +33,7 @@ get_header();
 
             <div class="tpa-dashboard-loading" style="display: none;">
                 <div class="spinner"></div>
-                <p><?php _e('Loading dashboard data...', 'trimontium-website-login'); ?></p>
+                <p><?php _e('Loading dashboard data...', 'trimontium-wp-private-dashboards'); ?></p>
             </div>
 
         </article>

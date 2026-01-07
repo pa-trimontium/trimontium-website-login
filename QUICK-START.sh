@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Quick Start Script for Trimontium Website Login Plugin
+# Quick Start Script for Trimontium WP Private Dashboards Plugin
 # This script helps you install the plugin to your Local by Flywheel WordPress site
 
-echo "=== Trimontium Website Login - Quick Install ==="
+echo "=== Trimontium WP Private Dashboards - Quick Install ==="
 echo ""
 
 # Check if running from plugin directory
-if [ ! -f "trimontium-website-login.php" ]; then
+if [ ! -f "trimontium-wp-private-dashboards.php" ]; then
     echo "Error: Please run this script from the plugin directory"
     exit 1
 fi
@@ -30,7 +30,7 @@ echo "1) Copy files (standalone installation)"
 echo "2) Create symlink (for development - changes reflect immediately)"
 read -p "Choice (1/2): " METHOD
 
-PLUGIN_PATH="$WP_PATH/wp-content/plugins/trimontium-website-login"
+PLUGIN_PATH="$WP_PATH/wp-content/plugins/trimontium-wp-private-dashboards"
 
 if [ "$METHOD" = "1" ]; then
     # Copy method
@@ -55,7 +55,7 @@ echo ""
 echo "Next steps:"
 echo "1. Go to your WordPress admin: http://yoursite.local/wp-admin"
 echo "2. Navigate to Plugins → Installed Plugins"
-echo "3. Find 'Trimontium Website Login' and click Activate"
+echo "3. Find 'Trimontium WP Private Dashboards' and click Activate"
 echo "4. Configure settings in Private Area menu"
 echo ""
 echo "See SETUP-GUIDE.md for detailed instructions"

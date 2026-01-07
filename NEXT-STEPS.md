@@ -1,7 +1,7 @@
 # ✅ Plugin Installed Successfully!
 
 The plugin has been copied to your WordPress installation at:
-`C:\Users\Gandalf\Local Sites\trimontium-test-local\app\public\wp-content\plugins\trimontium-website-login`
+`C:\Users\Gandalf\Local Sites\trimontium-test-local\app\public\wp-content\plugins\trimontium-wp-private-dashboards`
 
 ## Next Steps (5 minutes)
 
@@ -12,7 +12,7 @@ The plugin has been copied to your WordPress installation at:
    - Or go to: `http://trimontium-test-local.local/wp-admin`
 3. Login to WordPress admin
 4. Navigate to: **Plugins** → **Installed Plugins**
-5. Find **"Trimontium Website Login"**
+5. Find **"Trimontium WP Private Dashboards"**
 6. Click **Activate**
 
 ✅ You should now see a **"Private Area"** menu item in your admin sidebar!

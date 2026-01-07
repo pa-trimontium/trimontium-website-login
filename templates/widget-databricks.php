@@ -12,7 +12,7 @@ $widget_id = 'databricks-widget-' . uniqid();
 $widget_type = $atts['type'];
 $workspace = $atts['workspace'];
 $limit = $atts['limit'];
-$title = $atts['title'] ?: __('Databricks ' . ucfirst($widget_type), 'trimontium-website-login');
+$title = $atts['title'] ?: __('Databricks ' . ucfirst($widget_type), 'trimontium-wp-private-dashboards');
 $height = $atts['height'];
 ?>
 
@@ -27,7 +27,7 @@ $height = $atts['height'];
     <div class="tpa-widget-body">
         <div class="tpa-widget-loading">
             <span class="spinner is-active"></span>
-            <p><?php _e('Loading Databricks data...', 'trimontium-website-login'); ?></p>
+            <p><?php _e('Loading Databricks data...', 'trimontium-wp-private-dashboards'); ?></p>
         </div>
 
         <div class="tpa-widget-content" style="display: none;">

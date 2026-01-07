@@ -48,7 +48,7 @@ class TPA_Roles {
         // Add the role with capabilities
         add_role(
             self::ROLE_NAME,
-            __('Private Area User', 'trimontium-website-login'),
+            __('Private Area User', 'trimontium-wp-private-dashboards'),
             array(
                 'read'                      => true,  // Basic read access
                 'access_private_area'       => true,  // Custom capability

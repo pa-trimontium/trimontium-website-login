@@ -64,11 +64,11 @@ class TPA_Dashboard {
      */
     public function register_dashboard_post_type() {
         $args = array(
-            'label' => __('Private Dashboards', 'trimontium-website-login'),
+            'label' => __('Private Dashboards', 'trimontium-wp-private-dashboards'),
             'public' => true,
             'publicly_queryable' => true,
             'show_ui' => true,
-            'show_in_menu' => 'trimontium-website-login',
+            'show_in_menu' => 'trimontium-wp-private-dashboards',
             'query_var' => true,
             'rewrite' => array('slug' => 'private-dashboard'),
             'capability_type' => 'page',
@@ -88,7 +88,7 @@ class TPA_Dashboard {
     public function add_dashboard_meta_boxes() {
         add_meta_box(
             'tpa_dashboard_settings',
-            __('Dashboard Settings', 'trimontium-website-login'),
+            __('Dashboard Settings', 'trimontium-wp-private-dashboards'),
             array($this, 'render_dashboard_settings_metabox'),
             'tpa_dashboard',
             'side',
@@ -97,7 +97,7 @@ class TPA_Dashboard {
 
         add_meta_box(
             'tpa_dashboard_widgets',
-            __('Dashboard Widgets', 'trimontium-website-login'),
+            __('Dashboard Widgets', 'trimontium-wp-private-dashboards'),
             array($this, 'render_dashboard_widgets_metabox'),
             'tpa_dashboard',
             'normal',
@@ -118,18 +118,18 @@ class TPA_Dashboard {
         <p>
             <label>
                 <input type="checkbox" name="tpa_is_private" value="1" <?php checked($is_private, '1'); ?>>
-                <?php _e('Require authentication to view', 'trimontium-website-login'); ?>
+                <?php _e('Require authentication to view', 'trimontium-wp-private-dashboards'); ?>
             </label>
         </p>
 
         <p>
             <label for="tpa_dashboard_type">
-                <strong><?php _e('Dashboard Type:', 'trimontium-website-login'); ?></strong>
+                <strong><?php _e('Dashboard Type:', 'trimontium-wp-private-dashboards'); ?></strong>
             </label><br>
             <select name="tpa_dashboard_type" id="tpa_dashboard_type" style="width: 100%;">
-                <option value=""><?php _e('General', 'trimontium-website-login'); ?></option>
-                <option value="azure" <?php selected($dashboard_type, 'azure'); ?>><?php _e('Azure', 'trimontium-website-login'); ?></option>
-                <option value="databricks" <?php selected($dashboard_type, 'databricks'); ?>><?php _e('Databricks', 'trimontium-website-login'); ?></option>
+                <option value=""><?php _e('General', 'trimontium-wp-private-dashboards'); ?></option>
+                <option value="azure" <?php selected($dashboard_type, 'azure'); ?>><?php _e('Azure', 'trimontium-wp-private-dashboards'); ?></option>
+                <option value="databricks" <?php selected($dashboard_type, 'databricks'); ?>><?php _e('Databricks', 'trimontium-wp-private-dashboards'); ?></option>
             </select>
         </p>
         <?php
@@ -142,16 +142,16 @@ class TPA_Dashboard {
         $widgets = get_post_meta($post->ID, '_tpa_dashboard_widgets', true) ?: array();
         ?>
         <div id="tpa-widgets-container">
-            <p><?php _e('Add widgets to your dashboard using shortcodes in the editor, or configure them here:', 'trimontium-website-login'); ?></p>
+            <p><?php _e('Add widgets to your dashboard using shortcodes in the editor, or configure them here:', 'trimontium-wp-private-dashboards'); ?></p>
 
-            <h4><?php _e('Available Shortcodes:', 'trimontium-website-login'); ?></h4>
+            <h4><?php _e('Available Shortcodes:', 'trimontium-wp-private-dashboards'); ?></h4>
             <ul style="list-style: disc; margin-left: 20px;">
                 <li><code>[tpa_dashboard id="dashboard_id"]</code> - Display a complete dashboard</li>
                 <li><code>[tpa_azure_widget type="metrics" resource_id="resource_id"]</code> - Azure widget</li>
                 <li><code>[tpa_databricks_widget type="jobs" workspace="workspace_url"]</code> - Databricks widget</li>
             </ul>
 
-            <h4><?php _e('Widget Examples:', 'trimontium-website-login'); ?></h4>
+            <h4><?php _e('Widget Examples:', 'trimontium-wp-private-dashboards'); ?></h4>
             <pre style="background: #f5f5f5; padding: 10px; overflow-x: auto;">
 // Azure Metrics Widget
 [tpa_azure_widget type="metrics" resource_id="/subscriptions/xxx/resourceGroups/xxx/providers/xxx" metric="Percentage CPU"]
@@ -231,7 +231,7 @@ class TPA_Dashboard {
     public function azure_widget_shortcode($atts) {
         // Check permissions
         if (!TPA_Roles::user_can_access_azure()) {
-            return '<div class="tpa-error">' . __('You do not have permission to view Azure data.', 'trimontium-website-login') . '</div>';
+            return '<div class="tpa-error">' . __('You do not have permission to view Azure data.', 'trimontium-wp-private-dashboards') . '</div>';
         }
 
         $atts = shortcode_atts(array(
@@ -253,7 +253,7 @@ class TPA_Dashboard {
     public function databricks_widget_shortcode($atts) {
         // Check permissions
         if (!TPA_Roles::user_can_access_databricks()) {
-            return '<div class="tpa-error">' . __('You do not have permission to view Databricks data.', 'trimontium-website-login') . '</div>';
+            return '<div class="tpa-error">' . __('You do not have permission to view Databricks data.', 'trimontium-wp-private-dashboards') . '</div>';
         }
 
         $atts = shortcode_atts(array(
@@ -275,18 +275,18 @@ class TPA_Dashboard {
     public function databricks_file_shortcode($atts) {
         // Check permissions
         if (!TPA_Roles::user_can_access_databricks()) {
-            return '<div class="tpa-error">' . __('You do not have permission to view Databricks data.', 'trimontium-website-login') . '</div>';
+            return '<div class="tpa-error">' . __('You do not have permission to view Databricks data.', 'trimontium-wp-private-dashboards') . '</div>';
         }
 
         $atts = shortcode_atts(array(
-            'file_path' => '/Volumes/db_trimontium_dev/trimontium-hot-leads/output/leads.json',
+            'file_path' => '/Volumes/db_trimontium_dev/trimontium-leadgen/output/leads.json',
             'title' => 'Lead Viewer',
             'height' => '600px',
             'display' => 'table'  // table, json, or raw
         ), $atts);
 
         if (empty($atts['file_path'])) {
-            return '<div class="tpa-error">' . __('File path is required.', 'trimontium-website-login') . '</div>';
+            return '<div class="tpa-error">' . __('File path is required.', 'trimontium-wp-private-dashboards') . '</div>';
         }
 
         ob_start();

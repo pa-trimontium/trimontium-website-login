@@ -17,7 +17,7 @@ $columns = intval($atts['columns']);
     <div class="tpa-dashboard-grid" style="grid-template-columns: repeat(<?php echo $columns; ?>, 1fr);">
         <!-- Dashboard widgets will be loaded here via JavaScript -->
         <div class="tpa-dashboard-placeholder">
-            <p><?php _e('Loading dashboard...', 'trimontium-website-login'); ?></p>
+            <p><?php _e('Loading dashboard...', 'trimontium-wp-private-dashboards'); ?></p>
         </div>
     </div>
 </div>

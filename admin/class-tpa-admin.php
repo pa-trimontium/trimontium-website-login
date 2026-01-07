@@ -64,57 +64,57 @@ class TPA_Admin {
      */
     public function add_admin_menu() {
         add_menu_page(
-            __('Private Area', 'trimontium-website-login'),
-            __('Private Area', 'trimontium-website-login'),
+            __('Private Area', 'trimontium-wp-private-dashboards'),
+            __('Private Area', 'trimontium-wp-private-dashboards'),
             'manage_options',
-            'trimontium-website-login',
+            'trimontium-wp-private-dashboards',
             array($this, 'render_main_page'),
             'dashicons-lock',
             30
         );
 
         add_submenu_page(
-            'trimontium-website-login',
-            __('Settings', 'trimontium-website-login'),
-            __('Settings', 'trimontium-website-login'),
+            'trimontium-wp-private-dashboards',
+            __('Settings', 'trimontium-wp-private-dashboards'),
+            __('Settings', 'trimontium-wp-private-dashboards'),
             'manage_options',
-            'trimontium-website-login-settings',
+            'trimontium-wp-private-dashboards-settings',
             array($this, 'render_settings_page')
         );
 
         add_submenu_page(
-            'trimontium-website-login',
-            __('API Credentials', 'trimontium-website-login'),
-            __('API Credentials', 'trimontium-website-login'),
+            'trimontium-wp-private-dashboards',
+            __('API Credentials', 'trimontium-wp-private-dashboards'),
+            __('API Credentials', 'trimontium-wp-private-dashboards'),
             'manage_options',
-            'trimontium-website-login-api',
+            'trimontium-wp-private-dashboards-api',
             array($this, 'render_api_page')
         );
 
         add_submenu_page(
-            'trimontium-website-login',
-            __('Users', 'trimontium-website-login'),
-            __('Users', 'trimontium-website-login'),
+            'trimontium-wp-private-dashboards',
+            __('Users', 'trimontium-wp-private-dashboards'),
+            __('Users', 'trimontium-wp-private-dashboards'),
             'manage_options',
-            'trimontium-website-login-users',
+            'trimontium-wp-private-dashboards-users',
             array($this, 'render_users_page')
         );
 
         add_submenu_page(
-            'trimontium-website-login',
-            __('API Logs', 'trimontium-website-login'),
-            __('API Logs', 'trimontium-website-login'),
+            'trimontium-wp-private-dashboards',
+            __('API Logs', 'trimontium-wp-private-dashboards'),
+            __('API Logs', 'trimontium-wp-private-dashboards'),
             'manage_options',
-            'trimontium-website-login-logs',
+            'trimontium-wp-private-dashboards-logs',
             array($this, 'render_logs_page')
         );
 
         add_submenu_page(
-            'trimontium-website-login',
-            __('Diagnostics', 'trimontium-website-login'),
-            __('Diagnostics', 'trimontium-website-login'),
+            'trimontium-wp-private-dashboards',
+            __('Diagnostics', 'trimontium-wp-private-dashboards'),
+            __('Diagnostics', 'trimontium-wp-private-dashboards'),
             'manage_options',
-            'trimontium-website-login-diagnostics',
+            'trimontium-wp-private-dashboards-diagnostics',
             array($this, 'render_diagnostics_page')
         );
     }
@@ -145,52 +145,52 @@ class TPA_Admin {
     public function render_main_page() {
         ?>
         <div class="wrap">
-            <h1><?php _e('Trimontium Private Area', 'trimontium-website-login'); ?></h1>
+            <h1><?php _e('Trimontium Private Area', 'trimontium-wp-private-dashboards'); ?></h1>
 
             <div class="tpa-admin-grid">
                 <div class="tpa-admin-card">
-                    <h2><?php _e('Quick Stats', 'trimontium-website-login'); ?></h2>
+                    <h2><?php _e('Quick Stats', 'trimontium-wp-private-dashboards'); ?></h2>
                     <?php
                     $users = TPA_Roles::get_private_area_users();
                     $dashboards = wp_count_posts('tpa_dashboard');
                     ?>
                     <ul>
-                        <li><?php printf(__('Authorized Users: %d', 'trimontium-website-login'), count($users)); ?></li>
-                        <li><?php printf(__('Dashboards: %d', 'trimontium-website-login'), $dashboards->publish); ?></li>
+                        <li><?php printf(__('Authorized Users: %d', 'trimontium-wp-private-dashboards'), count($users)); ?></li>
+                        <li><?php printf(__('Dashboards: %d', 'trimontium-wp-private-dashboards'), $dashboards->publish); ?></li>
                     </ul>
                 </div>
 
                 <div class="tpa-admin-card">
-                    <h2><?php _e('Quick Actions', 'trimontium-website-login'); ?></h2>
+                    <h2><?php _e('Quick Actions', 'trimontium-wp-private-dashboards'); ?></h2>
                     <p>
                         <a href="<?php echo admin_url('post-new.php?post_type=tpa_dashboard'); ?>" class="button button-primary">
-                            <?php _e('Create New Dashboard', 'trimontium-website-login'); ?>
+                            <?php _e('Create New Dashboard', 'trimontium-wp-private-dashboards'); ?>
                         </a>
                     </p>
                     <p>
-                        <a href="<?php echo admin_url('admin.php?page=trimontium-website-login-users'); ?>" class="button">
-                            <?php _e('Manage Users', 'trimontium-website-login'); ?>
+                        <a href="<?php echo admin_url('admin.php?page=trimontium-wp-private-dashboards-users'); ?>" class="button">
+                            <?php _e('Manage Users', 'trimontium-wp-private-dashboards'); ?>
                         </a>
                     </p>
                     <p>
-                        <a href="<?php echo admin_url('admin.php?page=trimontium-website-login-api'); ?>" class="button">
-                            <?php _e('Configure API Credentials', 'trimontium-website-login'); ?>
+                        <a href="<?php echo admin_url('admin.php?page=trimontium-wp-private-dashboards-api'); ?>" class="button">
+                            <?php _e('Configure API Credentials', 'trimontium-wp-private-dashboards'); ?>
                         </a>
                     </p>
                 </div>
 
                 <div class="tpa-admin-card">
-                    <h2><?php _e('Connection Status', 'trimontium-website-login'); ?></h2>
+                    <h2><?php _e('Connection Status', 'trimontium-wp-private-dashboards'); ?></h2>
                     <div id="tpa-connection-status">
-                        <p><?php _e('Click to test connections:', 'trimontium-website-login'); ?></p>
+                        <p><?php _e('Click to test connections:', 'trimontium-wp-private-dashboards'); ?></p>
                         <p>
                             <button type="button" class="button" id="test-azure-connection">
-                                <?php _e('Test Azure Connection', 'trimontium-website-login'); ?>
+                                <?php _e('Test Azure Connection', 'trimontium-wp-private-dashboards'); ?>
                             </button>
                         </p>
                         <p>
                             <button type="button" class="button" id="test-databricks-connection">
-                                <?php _e('Test Databricks Connection', 'trimontium-website-login'); ?>
+                                <?php _e('Test Databricks Connection', 'trimontium-wp-private-dashboards'); ?>
                             </button>
                         </p>
                         <div id="connection-results"></div>
@@ -225,7 +225,7 @@ class TPA_Admin {
     public function render_settings_page() {
         ?>
         <div class="wrap">
-            <h1><?php _e('Private Area Settings', 'trimontium-website-login'); ?></h1>
+            <h1><?php _e('Private Area Settings', 'trimontium-wp-private-dashboards'); ?></h1>
 
             <form method="post" action="options.php">
                 <?php
@@ -236,7 +236,7 @@ class TPA_Admin {
                     <tr>
                         <th scope="row">
                             <label for="tpa_main_dashboard_page">
-                                <?php _e('Main Dashboard Page', 'trimontium-website-login'); ?>
+                                <?php _e('Main Dashboard Page', 'trimontium-wp-private-dashboards'); ?>
                             </label>
                         </th>
                         <td>
@@ -244,11 +244,11 @@ class TPA_Admin {
                             wp_dropdown_pages(array(
                                 'name' => 'tpa_main_dashboard_page',
                                 'selected' => get_option('tpa_main_dashboard_page'),
-                                'show_option_none' => __('Select a page', 'trimontium-website-login')
+                                'show_option_none' => __('Select a page', 'trimontium-wp-private-dashboards')
                             ));
                             ?>
                             <p class="description">
-                                <?php _e('Users will be redirected to this page after login', 'trimontium-website-login'); ?>
+                                <?php _e('Users will be redirected to this page after login', 'trimontium-wp-private-dashboards'); ?>
                             </p>
                         </td>
                     </tr>
@@ -256,14 +256,14 @@ class TPA_Admin {
                     <tr>
                         <th scope="row">
                             <label for="tpa_enable_logging">
-                                <?php _e('Enable API Logging', 'trimontium-website-login'); ?>
+                                <?php _e('Enable API Logging', 'trimontium-wp-private-dashboards'); ?>
                             </label>
                         </th>
                         <td>
                             <input type="checkbox" name="tpa_enable_logging" id="tpa_enable_logging"
                                    value="1" <?php checked(get_option('tpa_enable_logging'), '1'); ?>>
                             <p class="description">
-                                <?php _e('Log all API requests for debugging', 'trimontium-website-login'); ?>
+                                <?php _e('Log all API requests for debugging', 'trimontium-wp-private-dashboards'); ?>
                             </p>
                         </td>
                     </tr>
@@ -271,7 +271,7 @@ class TPA_Admin {
                     <tr>
                         <th scope="row">
                             <label for="tpa_cache_duration">
-                                <?php _e('Cache Duration (seconds)', 'trimontium-website-login'); ?>
+                                <?php _e('Cache Duration (seconds)', 'trimontium-wp-private-dashboards'); ?>
                             </label>
                         </th>
                         <td>
@@ -279,7 +279,7 @@ class TPA_Admin {
                                    value="<?php echo esc_attr(get_option('tpa_cache_duration', '300')); ?>"
                                    min="0" step="1" class="regular-text">
                             <p class="description">
-                                <?php _e('How long to cache API responses', 'trimontium-website-login'); ?>
+                                <?php _e('How long to cache API responses', 'trimontium-wp-private-dashboards'); ?>
                             </p>
                         </td>
                     </tr>
@@ -290,16 +290,16 @@ class TPA_Admin {
 
             <hr>
 
-            <h2><?php _e('Cache Management', 'trimontium-website-login'); ?></h2>
+            <h2><?php _e('Cache Management', 'trimontium-wp-private-dashboards'); ?></h2>
             <p>
                 <button type="button" class="button" id="clear-all-cache">
-                    <?php _e('Clear All Cache', 'trimontium-website-login'); ?>
+                    <?php _e('Clear All Cache', 'trimontium-wp-private-dashboards'); ?>
                 </button>
                 <button type="button" class="button" id="clear-azure-cache">
-                    <?php _e('Clear Azure Cache', 'trimontium-website-login'); ?>
+                    <?php _e('Clear Azure Cache', 'trimontium-wp-private-dashboards'); ?>
                 </button>
                 <button type="button" class="button" id="clear-databricks-cache">
-                    <?php _e('Clear Databricks Cache', 'trimontium-website-login'); ?>
+                    <?php _e('Clear Databricks Cache', 'trimontium-wp-private-dashboards'); ?>
                 </button>
             </p>
             <div id="cache-clear-results"></div>
@@ -313,11 +313,11 @@ class TPA_Admin {
     public function render_api_page() {
         ?>
         <div class="wrap">
-            <h1><?php _e('API Credentials', 'trimontium-website-login'); ?></h1>
+            <h1><?php _e('API Credentials', 'trimontium-wp-private-dashboards'); ?></h1>
 
             <h2 class="nav-tab-wrapper">
-                <a href="#azure-tab" class="nav-tab nav-tab-active"><?php _e('Azure', 'trimontium-website-login'); ?></a>
-                <a href="#databricks-tab" class="nav-tab"><?php _e('Databricks', 'trimontium-website-login'); ?></a>
+                <a href="#azure-tab" class="nav-tab nav-tab-active"><?php _e('Azure', 'trimontium-wp-private-dashboards'); ?></a>
+                <a href="#databricks-tab" class="nav-tab"><?php _e('Databricks', 'trimontium-wp-private-dashboards'); ?></a>
             </h2>
 
             <div id="azure-tab" class="tab-content">
@@ -327,7 +327,7 @@ class TPA_Admin {
                     <table class="form-table">
                         <tr>
                             <th scope="row">
-                                <label for="tpa_azure_tenant_id"><?php _e('Tenant ID', 'trimontium-website-login'); ?></label>
+                                <label for="tpa_azure_tenant_id"><?php _e('Tenant ID', 'trimontium-wp-private-dashboards'); ?></label>
                             </th>
                             <td>
                                 <input type="text" name="tpa_azure_tenant_id" id="tpa_azure_tenant_id"
@@ -338,7 +338,7 @@ class TPA_Admin {
 
                         <tr>
                             <th scope="row">
-                                <label for="tpa_azure_client_id"><?php _e('Client ID', 'trimontium-website-login'); ?></label>
+                                <label for="tpa_azure_client_id"><?php _e('Client ID', 'trimontium-wp-private-dashboards'); ?></label>
                             </th>
                             <td>
                                 <input type="text" name="tpa_azure_client_id" id="tpa_azure_client_id"
@@ -349,7 +349,7 @@ class TPA_Admin {
 
                         <tr>
                             <th scope="row">
-                                <label for="tpa_azure_client_secret"><?php _e('Client Secret', 'trimontium-website-login'); ?></label>
+                                <label for="tpa_azure_client_secret"><?php _e('Client Secret', 'trimontium-wp-private-dashboards'); ?></label>
                             </th>
                             <td>
                                 <input type="password" name="tpa_azure_client_secret" id="tpa_azure_client_secret"
@@ -360,7 +360,7 @@ class TPA_Admin {
 
                         <tr>
                             <th scope="row">
-                                <label for="tpa_azure_subscription_id"><?php _e('Subscription ID', 'trimontium-website-login'); ?></label>
+                                <label for="tpa_azure_subscription_id"><?php _e('Subscription ID', 'trimontium-wp-private-dashboards'); ?></label>
                             </th>
                             <td>
                                 <input type="text" name="tpa_azure_subscription_id" id="tpa_azure_subscription_id"
@@ -381,7 +381,7 @@ class TPA_Admin {
                     <table class="form-table">
                         <tr>
                             <th scope="row">
-                                <label for="tpa_databricks_workspace_url"><?php _e('Workspace URL', 'trimontium-website-login'); ?></label>
+                                <label for="tpa_databricks_workspace_url"><?php _e('Workspace URL', 'trimontium-wp-private-dashboards'); ?></label>
                             </th>
                             <td>
                                 <input type="url" name="tpa_databricks_workspace_url" id="tpa_databricks_workspace_url"
@@ -392,7 +392,7 @@ class TPA_Admin {
 
                         <tr>
                             <th scope="row">
-                                <label for="tpa_databricks_token"><?php _e('Access Token', 'trimontium-website-login'); ?></label>
+                                <label for="tpa_databricks_token"><?php _e('Access Token', 'trimontium-wp-private-dashboards'); ?></label>
                             </th>
                             <td>
                                 <input type="password" name="tpa_databricks_token" id="tpa_databricks_token"
@@ -428,18 +428,18 @@ class TPA_Admin {
         $users = TPA_Roles::get_private_area_users();
         ?>
         <div class="wrap">
-            <h1><?php _e('Private Area Users', 'trimontium-website-login'); ?></h1>
+            <h1><?php _e('Private Area Users', 'trimontium-wp-private-dashboards'); ?></h1>
 
-            <p><?php _e('Users with access to the private area:', 'trimontium-website-login'); ?></p>
+            <p><?php _e('Users with access to the private area:', 'trimontium-wp-private-dashboards'); ?></p>
 
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
-                        <th><?php _e('User', 'trimontium-website-login'); ?></th>
-                        <th><?php _e('Email', 'trimontium-website-login'); ?></th>
-                        <th><?php _e('Role', 'trimontium-website-login'); ?></th>
-                        <th><?php _e('Azure Access', 'trimontium-website-login'); ?></th>
-                        <th><?php _e('Databricks Access', 'trimontium-website-login'); ?></th>
+                        <th><?php _e('User', 'trimontium-wp-private-dashboards'); ?></th>
+                        <th><?php _e('Email', 'trimontium-wp-private-dashboards'); ?></th>
+                        <th><?php _e('Role', 'trimontium-wp-private-dashboards'); ?></th>
+                        <th><?php _e('Azure Access', 'trimontium-wp-private-dashboards'); ?></th>
+                        <th><?php _e('Databricks Access', 'trimontium-wp-private-dashboards'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -467,7 +467,7 @@ class TPA_Admin {
 
             <p>
                 <a href="<?php echo admin_url('users.php'); ?>" class="button">
-                    <?php _e('Manage All Users', 'trimontium-website-login'); ?>
+                    <?php _e('Manage All Users', 'trimontium-wp-private-dashboards'); ?>
                 </a>
             </p>
         </div>
@@ -487,21 +487,21 @@ class TPA_Admin {
 
         ?>
         <div class="wrap">
-            <h1><?php _e('API Logs', 'trimontium-website-login'); ?></h1>
+            <h1><?php _e('API Logs', 'trimontium-wp-private-dashboards'); ?></h1>
 
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
-                        <th><?php _e('Time', 'trimontium-website-login'); ?></th>
-                        <th><?php _e('User', 'trimontium-website-login'); ?></th>
-                        <th><?php _e('Endpoint', 'trimontium-website-login'); ?></th>
-                        <th><?php _e('Status', 'trimontium-website-login'); ?></th>
+                        <th><?php _e('Time', 'trimontium-wp-private-dashboards'); ?></th>
+                        <th><?php _e('User', 'trimontium-wp-private-dashboards'); ?></th>
+                        <th><?php _e('Endpoint', 'trimontium-wp-private-dashboards'); ?></th>
+                        <th><?php _e('Status', 'trimontium-wp-private-dashboards'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($logs)) : ?>
                         <tr>
-                            <td colspan="4"><?php _e('No logs found', 'trimontium-website-login'); ?></td>
+                            <td colspan="4"><?php _e('No logs found', 'trimontium-wp-private-dashboards'); ?></td>
                         </tr>
                     <?php else : ?>
                         <?php foreach ($logs as $log) : ?>
@@ -510,7 +510,7 @@ class TPA_Admin {
                                 <td>
                                     <?php
                                     $user = get_user_by('id', $log->user_id);
-                                    echo $user ? esc_html($user->display_name) : __('Unknown', 'trimontium-website-login');
+                                    echo $user ? esc_html($user->display_name) : __('Unknown', 'trimontium-wp-private-dashboards');
                                     ?>
                                 </td>
                                 <td><?php echo esc_html($log->api_endpoint); ?></td>
@@ -712,7 +712,7 @@ class TPA_Admin {
      * Add user columns
      */
     public function add_user_columns($columns) {
-        $columns['private_area'] = __('Private Area Access', 'trimontium-website-login');
+        $columns['private_area'] = __('Private Area Access', 'trimontium-wp-private-dashboards');
         return $columns;
     }
 
@@ -730,8 +730,8 @@ class TPA_Admin {
      * Add bulk actions
      */
     public function add_bulk_actions($actions) {
-        $actions['grant_private_area_access'] = __('Grant Private Area Access', 'trimontium-website-login');
-        $actions['revoke_private_area_access'] = __('Revoke Private Area Access', 'trimontium-website-login');
+        $actions['grant_private_area_access'] = __('Grant Private Area Access', 'trimontium-wp-private-dashboards');
+        $actions['revoke_private_area_access'] = __('Revoke Private Area Access', 'trimontium-wp-private-dashboards');
         return $actions;
     }
 
@@ -764,8 +764,8 @@ class TPA_Admin {
 
         ?>
         <div class="wrap">
-            <h1><?php _e('System Diagnostics', 'trimontium-website-login'); ?></h1>
-            <p><?php _e('This page helps diagnose issues with the plugin.', 'trimontium-website-login'); ?></p>
+            <h1><?php _e('System Diagnostics', 'trimontium-wp-private-dashboards'); ?></h1>
+            <p><?php _e('This page helps diagnose issues with the plugin.', 'trimontium-wp-private-dashboards'); ?></p>
 
             <div class="card" style="max-width: 1000px;">
                 <h2>Environment Information</h2>
@@ -824,7 +824,7 @@ class TPA_Admin {
                 <?php
                 $workspace_url = get_option('tpa_databricks_workspace_url', '');
                 $token = get_option('tpa_databricks_token', '');
-                $file_path = '/Volumes/db_trimontium_dev/trimontium-hot-leads/output/leads.json';
+                $file_path = '/Volumes/db_trimontium_dev/trimontium-leadgen/output/leads.json';
                 ?>
                 <table class="widefat striped">
                     <tbody>

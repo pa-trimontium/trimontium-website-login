@@ -12,7 +12,7 @@ $widget_id = 'azure-widget-' . uniqid();
 $widget_type = $atts['type'];
 $resource_id = $atts['resource_id'];
 $metric = $atts['metric'];
-$title = $atts['title'] ?: __('Azure Metrics', 'trimontium-website-login');
+$title = $atts['title'] ?: __('Azure Metrics', 'trimontium-wp-private-dashboards');
 $height = $atts['height'];
 ?>
 
@@ -27,7 +27,7 @@ $height = $atts['height'];
     <div class="tpa-widget-body">
         <div class="tpa-widget-loading">
             <span class="spinner is-active"></span>
-            <p><?php _e('Loading Azure data...', 'trimontium-website-login'); ?></p>
+            <p><?php _e('Loading Azure data...', 'trimontium-wp-private-dashboards'); ?></p>
         </div>
 
         <div class="tpa-widget-content" style="display: none;">

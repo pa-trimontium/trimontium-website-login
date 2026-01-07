@@ -156,7 +156,7 @@ $display = $atts['display'];
     <div class="tpa-widget-body">
         <div class="tpa-widget-loading">
             <span class="spinner is-active"></span>
-            <p><?php _e('Loading leads...', 'trimontium-website-login'); ?></p>
+            <p><?php _e('Loading leads...', 'trimontium-wp-private-dashboards'); ?></p>
         </div>
 
         <div class="tpa-widget-content" style="display: none;">
@@ -185,7 +185,7 @@ $display = $atts['display'];
         <?php
         // Check for .synced file first (created during sync), otherwise use plugin file
         $sync_file = TPA_PLUGIN_DIR . '.synced';
-        $plugin_file = TPA_PLUGIN_DIR . 'trimontium-website-login.php';
+        $plugin_file = TPA_PLUGIN_DIR . 'trimontium-wp-private-dashboards.php';
 
         if (file_exists($sync_file)) {
             $mod_time = filemtime($sync_file);

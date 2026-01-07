@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Trimontium Website Login
+ * Plugin Name: Trimontium WP Private Dashboards
  * Plugin URI: https://trimontium.com
  * Description: Secure private area for Azure and Databricks dashboards with role-based access control
  * Version: 1.0.0
@@ -8,7 +8,7 @@
  * Author URI: https://trimontium.com
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: trimontium-website-login
+ * Text Domain: trimontium-wp-private-dashboards
  */
 
 // Exit if accessed directly
@@ -25,7 +25,7 @@ define('TPA_PLUGIN_BASENAME', plugin_basename(__FILE__));
 /**
  * Main Plugin Class
  */
-class Trimontium_Website_Login {
+class Trimontium_WP_Private_Dashboards {
 
     /**
      * Singleton instance
@@ -145,7 +145,7 @@ class Trimontium_Website_Login {
      */
     public function enqueue_admin_assets($hook) {
         // Only load on our plugin's admin pages
-        if (strpos($hook, 'trimontium-website-login') !== false) {
+        if (strpos($hook, 'trimontium-wp-private-dashboards') !== false) {
             wp_enqueue_style(
                 'tpa-admin',
                 TPA_PLUGIN_URL . 'assets/css/admin.css',
@@ -167,7 +167,7 @@ class Trimontium_Website_Login {
 /**
  * Plugin activation callback
  */
-function trimontium_website_login_activate() {
+function trimontium_wp_private_dashboards_activate() {
     // Load dependencies first
     require_once TPA_PLUGIN_DIR . 'includes/class-tpa-roles.php';
 
@@ -201,19 +201,19 @@ function trimontium_website_login_activate() {
 /**
  * Plugin deactivation callback
  */
-function trimontium_website_login_deactivate() {
+function trimontium_wp_private_dashboards_deactivate() {
     // Flush rewrite rules
     flush_rewrite_rules();
 }
 
 // Register activation/deactivation hooks
-register_activation_hook(__FILE__, 'trimontium_website_login_activate');
-register_deactivation_hook(__FILE__, 'trimontium_website_login_deactivate');
+register_activation_hook(__FILE__, 'trimontium_wp_private_dashboards_activate');
+register_deactivation_hook(__FILE__, 'trimontium_wp_private_dashboards_deactivate');
 
 // Initialize the plugin
-function trimontium_website_login() {
-    return Trimontium_Website_Login::get_instance();
+function trimontium_wp_private_dashboards() {
+    return Trimontium_WP_Private_Dashboards::get_instance();
 }
 
 // Start the plugin
-trimontium_website_login();
+trimontium_wp_private_dashboards();

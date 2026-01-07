@@ -13,7 +13,7 @@
    ```bash
    # From this directory, copy the entire folder to your WordPress plugins directory
    # Example path (adjust to your site name):
-   cp -r /home/pa/trimontium-website-login /path/to/your-site/app/public/wp-content/plugins/
+   cp -r /home/pa/trimontium-wp-private-dashboards /path/to/your-site/app/public/wp-content/plugins/
    ```
 
 ### Option B: Create Symbolic Link (For Development)
@@ -22,7 +22,7 @@ This allows you to edit files in your current location and see changes immediate
 
 ```bash
 # Create a symlink instead of copying
-ln -s /home/pa/trimontium-website-login /path/to/your-site/app/public/wp-content/plugins/trimontium-website-login
+ln -s /home/pa/trimontium-wp-private-dashboards /path/to/your-site/app/public/wp-content/plugins/trimontium-wp-private-dashboards
 ```
 
 ## Step 2: Activate the Plugin
@@ -33,7 +33,7 @@ ln -s /home/pa/trimontium-website-login /path/to/your-site/app/public/wp-content
 
 2. **Activate the plugin**:
    - Go to **Plugins** → **Installed Plugins**
-   - Find "Trimontium Website Login"
+   - Find "Trimontium WP Private Dashboards"
    - Click **Activate**
 
 3. **Verify activation**:

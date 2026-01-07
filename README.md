@@ -15,7 +15,7 @@ A secure WordPress plugin for creating a private area with role-based access con
 
 ## Installation
 
-1. **Upload the plugin files** to `/wp-content/plugins/trimontium-website-login/` directory
+1. **Upload the plugin files** to `/wp-content/plugins/trimontium-wp-private-dashboards/` directory
 2. **Activate the plugin** through the 'Plugins' menu in WordPress
 3. **Configure API credentials** in Private Area → API Credentials
 4. **Create dashboard pages** using the Private Dashboards post type
@@ -171,7 +171,7 @@ Override the default styles by adding custom CSS:
 
 ### Templates
 
-Copy template files from `/templates/` to your theme folder at `/your-theme/trimontium-website-login/` to customize:
+Copy template files from `/templates/` to your theme folder at `/your-theme/trimontium-wp-private-dashboards/` to customize:
 - `dashboard-template.php`
 - `widget-azure.php`
 - `widget-databricks.php`
@@ -207,7 +207,7 @@ The plugin provides various hooks for extending functionality (see code comments
 ### File Structure
 
 ```
-trimontium-website-login/
+trimontium-wp-private-dashboards/
 ├── admin/
 │   └── class-tpa-admin.php
 ├── assets/
@@ -227,13 +227,13 @@ trimontium-website-login/
 │   ├── shortcode-dashboard.php
 │   ├── widget-azure.php
 │   └── widget-databricks.php
-├── trimontium-website-login.php
+├── trimontium-wp-private-dashboards.php
 └── README.md
 ```
 
 ### Classes
 
-- **Trimontium_Website_Login**: Main plugin class
+- **Trimontium_WP_Private_Dashboards**: Main plugin class
 - **TPA_Roles**: Role and capability management
 - **TPA_Auth**: Authentication and access control
 - **TPA_Dashboard**: Dashboard and widget management
