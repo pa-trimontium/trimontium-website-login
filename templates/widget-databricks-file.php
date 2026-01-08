@@ -140,6 +140,85 @@ $display = $atts['display'];
     color: #999;
     text-align: right;
 }
+
+.tpa-lead-tabs {
+    display: flex;
+    gap: 5px;
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 20px;
+}
+
+.tpa-lead-tab {
+    padding: 10px 20px;
+    background: #f5f5f5;
+    border: none;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    transition: all 0.3s;
+}
+
+.tpa-lead-tab:hover {
+    background: #e8e8e8;
+    color: #333;
+}
+
+.tpa-lead-tab.active {
+    background: white;
+    color: #0073aa;
+    border-bottom: 2px solid #0073aa;
+    margin-bottom: -2px;
+}
+
+.tpa-tab-content {
+    display: none;
+}
+
+.tpa-tab-content.active {
+    display: block;
+}
+
+.tpa-ch-section {
+    margin-bottom: 25px;
+    padding: 15px;
+    background: #fafafa;
+    border-radius: 6px;
+    border-left: 3px solid #0073aa;
+}
+
+.tpa-ch-section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.tpa-ch-field {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.tpa-ch-field:last-child {
+    border-bottom: none;
+}
+
+.tpa-ch-field-label {
+    font-weight: 600;
+    color: #555;
+}
+
+.tpa-ch-field-value {
+    color: #333;
+    word-break: break-word;
+}
 </style>
 
 <div class="tpa-widget tpa-databricks-file-widget tpa-lead-viewer" id="<?php echo esc_attr($widget_id); ?>">
@@ -173,7 +252,18 @@ $display = $atts['display'];
                 <button class="tpa-next-lead">Next →</button>
             </div>
 
-            <div class="tpa-file-data"></div>
+            <div class="tpa-lead-tabs" style="display: none;">
+                <button class="tpa-lead-tab active" data-tab="general">General Information</button>
+                <button class="tpa-lead-tab" data-tab="companies-house">Companies House</button>
+            </div>
+
+            <div id="tab-general" class="tpa-tab-content active">
+                <div class="tpa-file-data-general"></div>
+            </div>
+
+            <div id="tab-companies-house" class="tpa-tab-content">
+                <div class="tpa-file-data-ch"></div>
+            </div>
         </div>
 
         <div class="tpa-widget-error" style="display: none;">
@@ -288,8 +378,9 @@ $display = $atts['display'];
 
         function showLead(index) {
             if (!allLeads || allLeads.length === 0) {
-                $widget.find('.tpa-file-data').html('<div class="tpa-lead-no-data">No leads found</div>');
+                $widget.find('.tpa-file-data-general').html('<div class="tpa-lead-no-data">No leads found</div>');
                 $widget.find('.tpa-lead-navigation').hide();
+                $widget.find('.tpa-lead-tabs').hide();
                 return;
             }
 
@@ -309,6 +400,12 @@ $display = $atts['display'];
 
             // Update lead number input
             $leadNumber.val(index + 1);
+
+            // Reset to first tab
+            $widget.find('.tpa-lead-tab').removeClass('active');
+            $widget.find('.tpa-lead-tab[data-tab="general"]').addClass('active');
+            $widget.find('.tpa-tab-content').removeClass('active');
+            $widget.find('#tab-general').addClass('active');
 
             // Render lead
             renderLead(lead);
@@ -389,11 +486,40 @@ $display = $atts['display'];
         }
 
         function renderLead(lead) {
-            var html = '<div class="tpa-lead-card">';
+            // Show tabs
+            $widget.find('.tpa-lead-tabs').show();
+
+            // Separate companies house data from general data
+            var companiesHouse = null;
+            var generalData = {};
 
             for (var key in lead) {
                 if (lead.hasOwnProperty(key)) {
-                    var value = lead[key];
+                    // Check for companies house field (various spellings)
+                    if (key.toLowerCase() === 'companies_house' ||
+                        key.toLowerCase() === 'companie_house' ||
+                        key.toLowerCase() === 'companieshouse' ||
+                        key.toLowerCase() === 'companies house') {
+                        companiesHouse = lead[key];
+                    } else {
+                        generalData[key] = lead[key];
+                    }
+                }
+            }
+
+            // Render general data
+            renderGeneralData(generalData);
+
+            // Render companies house data
+            renderCompaniesHouseData(companiesHouse);
+        }
+
+        function renderGeneralData(data) {
+            var html = '<div class="tpa-lead-card">';
+
+            for (var key in data) {
+                if (data.hasOwnProperty(key)) {
+                    var value = data[key];
                     var formattedValue;
 
                     // Special formatting for specific fields
@@ -458,7 +584,180 @@ $display = $atts['display'];
             }
 
             html += '</div>';
-            $widget.find('.tpa-file-data').html(html);
+            $widget.find('.tpa-file-data-general').html(html);
+        }
+
+        function renderCompaniesHouseData(data) {
+            if (!data || (typeof data === 'object' && Object.keys(data).length === 0)) {
+                $widget.find('.tpa-file-data-ch').html('<div class="tpa-lead-no-data">No Companies House data available</div>');
+                return;
+            }
+
+            var html = '<div class="tpa-lead-card">';
+            html += renderCompaniesHouseSection(data);
+            html += '</div>';
+
+            $widget.find('.tpa-file-data-ch').html(html);
+        }
+
+        function renderCompaniesHouseSection(data, depth) {
+            depth = depth || 0;
+            var html = '';
+
+            if (typeof data !== 'object' || data === null) {
+                return escapeHtml(String(data));
+            }
+
+            // Group related fields into sections
+            var sections = categorizeCompaniesHouseFields(data);
+
+            for (var sectionName in sections) {
+                if (sections.hasOwnProperty(sectionName)) {
+                    var sectionData = sections[sectionName];
+
+                    if (depth === 0) {
+                        html += '<div class="tpa-ch-section">';
+                        html += '<div class="tpa-ch-section-title">' + escapeHtml(sectionName) + '</div>';
+                    }
+
+                    for (var key in sectionData) {
+                        if (sectionData.hasOwnProperty(key)) {
+                            var value = sectionData[key];
+                            var label = formatFieldLabel(key);
+
+                            html += '<div class="tpa-ch-field">';
+                            html += '<div class="tpa-ch-field-label">' + escapeHtml(label) + ':</div>';
+                            html += '<div class="tpa-ch-field-value">' + formatCompaniesHouseValue(value) + '</div>';
+                            html += '</div>';
+                        }
+                    }
+
+                    if (depth === 0) {
+                        html += '</div>';
+                    }
+                }
+            }
+
+            return html;
+        }
+
+        function categorizeCompaniesHouseFields(data) {
+            var sections = {
+                'Company Information': {},
+                'Registered Office': {},
+                'Company Status': {},
+                'Accounts': {},
+                'Officers': {},
+                'Filing History': {},
+                'SIC Codes': {},
+                'Other Information': {}
+            };
+
+            for (var key in data) {
+                if (!data.hasOwnProperty(key)) continue;
+
+                var lowerKey = key.toLowerCase();
+
+                // Categorize fields
+                if (lowerKey.includes('name') || lowerKey.includes('number') || lowerKey.includes('type') ||
+                    lowerKey.includes('jurisdiction') || lowerKey.includes('country') && !lowerKey.includes('registered')) {
+                    sections['Company Information'][key] = data[key];
+                } else if (lowerKey.includes('address') || lowerKey.includes('registered') ||
+                           lowerKey.includes('locality') || lowerKey.includes('postal') || lowerKey.includes('region')) {
+                    sections['Registered Office'][key] = data[key];
+                } else if (lowerKey.includes('status') || lowerKey.includes('date') && !lowerKey.includes('account')) {
+                    sections['Company Status'][key] = data[key];
+                } else if (lowerKey.includes('account') || lowerKey.includes('annual_return') ||
+                           lowerKey.includes('confirmation_statement')) {
+                    sections['Accounts'][key] = data[key];
+                } else if (lowerKey.includes('officer') || lowerKey.includes('director') || lowerKey.includes('secretary')) {
+                    sections['Officers'][key] = data[key];
+                } else if (lowerKey.includes('filing') || lowerKey.includes('document')) {
+                    sections['Filing History'][key] = data[key];
+                } else if (lowerKey.includes('sic')) {
+                    sections['SIC Codes'][key] = data[key];
+                } else {
+                    sections['Other Information'][key] = data[key];
+                }
+            }
+
+            // Remove empty sections
+            for (var section in sections) {
+                if (Object.keys(sections[section]).length === 0) {
+                    delete sections[section];
+                }
+            }
+
+            return sections;
+        }
+
+        function formatFieldLabel(key) {
+            return key
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, function(l) { return l.toUpperCase(); });
+        }
+
+        function formatCompaniesHouseValue(value) {
+            if (value === null || value === undefined) {
+                return '-';
+            }
+
+            if (typeof value === 'boolean') {
+                return value ? 'Yes' : 'No';
+            }
+
+            if (Array.isArray(value)) {
+                if (value.length === 0) {
+                    return '-';
+                }
+
+                var html = '<div style="margin-top: 5px;">';
+                value.forEach(function(item, idx) {
+                    if (typeof item === 'object' && item !== null) {
+                        html += '<div style="background: white; padding: 10px; margin: 5px 0; border-radius: 4px; border: 1px solid #e0e0e0;">';
+                        for (var k in item) {
+                            if (item.hasOwnProperty(k)) {
+                                var label = formatFieldLabel(k);
+                                var val = formatCompaniesHouseValue(item[k]);
+                                html += '<div style="margin: 3px 0;"><strong>' + escapeHtml(label) + ':</strong> ' + val + '</div>';
+                            }
+                        }
+                        html += '</div>';
+                    } else {
+                        html += '<div style="margin: 3px 0;">• ' + escapeHtml(String(item)) + '</div>';
+                    }
+                });
+                html += '</div>';
+                return html;
+            }
+
+            if (typeof value === 'object') {
+                var html = '<div style="padding-left: 15px; margin-top: 5px;">';
+                for (var k in value) {
+                    if (value.hasOwnProperty(k)) {
+                        var label = formatFieldLabel(k);
+                        var val = formatCompaniesHouseValue(value[k]);
+                        html += '<div style="margin: 5px 0;"><strong>' + escapeHtml(label) + ':</strong> ' + val + '</div>';
+                    }
+                }
+                html += '</div>';
+                return html;
+            }
+
+            // Format dates nicely if they look like ISO dates
+            var dateMatch = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (dateMatch) {
+                var date = new Date(value);
+                if (!isNaN(date.getTime())) {
+                    return escapeHtml(date.toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                    }));
+                }
+            }
+
+            return formatStringWithNewlines(String(value));
         }
 
         function showAllLeads() {
@@ -466,7 +765,10 @@ $display = $atts['display'];
                 return;
             }
 
+            // Hide navigation and tabs when showing all leads
             $widget.find('.tpa-lead-navigation').hide();
+            $widget.find('.tpa-lead-tabs').hide();
+            $widget.find('.tpa-tab-content').removeClass('active');
 
             var html = '<div style="max-height: 500px; overflow-y: auto;">';
             html += '<table class="tpa-data-table">';
@@ -499,7 +801,9 @@ $display = $atts['display'];
             });
             html += '</tbody></table></div>';
 
-            $widget.find('.tpa-file-data').html(html);
+            // Show in the general tab container
+            $widget.find('.tpa-file-data-general').html(html);
+            $widget.find('#tab-general').addClass('active');
         }
 
         function escapeHtml(text) {
@@ -560,6 +864,19 @@ $display = $atts['display'];
 
         $widget.find('.tpa-widget-refresh').on('click', function() {
             loadFileData();
+        });
+
+        // Tab switching
+        $widget.find('.tpa-lead-tab').on('click', function() {
+            var tabName = $(this).data('tab');
+
+            // Update tab buttons
+            $widget.find('.tpa-lead-tab').removeClass('active');
+            $(this).addClass('active');
+
+            // Update tab content
+            $widget.find('.tpa-tab-content').removeClass('active');
+            $widget.find('#tab-' + tabName).addClass('active');
         });
 
         // Initial load

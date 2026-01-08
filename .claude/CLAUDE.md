@@ -34,6 +34,56 @@ A .zip version of the plugin is created for uploading to the live WordPress site
 
 If told to 'Prod' it means to do this process.
 
+**CRITICAL - MUST PRESERVE DIRECTORY STRUCTURE:**
+
+WordPress plugins MUST maintain their directory structure in the zip file. The plugin expects files in specific directories:
+- `includes/class-tpa-*.php`
+- `admin/class-tpa-admin.php`
+- `templates/*.php`
+- `assets/css/*.css`
+- `assets/js/*.js`
+
+**DO NOT USE** `python3 -m zipfile -c` as it flattens the directory structure, causing fatal errors on activation.
+
+**CORRECT METHOD** - Use this Python script to create the deployment package:
+
+```python
+cd /home/pa && python3 << 'EOF'
+import os
+import zipfile
+from datetime import datetime
+
+timestamp = datetime.now().strftime('%Y%m%d-%H%M')
+zip_filename = f'trimontium-wp-private-dashboards-{timestamp}.zip'
+zip_path = f'/home/pa/trimontium-wp-private-dashboards/{zip_filename}'
+
+exclude_patterns = ['.git', '.gitignore', '.claude', '.synced', '.zip', '.tar.gz']
+
+def should_exclude(path):
+    for pattern in exclude_patterns:
+        if pattern in path:
+            return True
+    return False
+
+with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+    base_dir = '/home/pa/trimontium-wp-private-dashboards'
+
+    for root, dirs, files in os.walk(base_dir):
+        dirs[:] = [d for d in dirs if not should_exclude(d)]
+
+        for file in files:
+            file_path = os.path.join(root, file)
+            if should_exclude(file_path):
+                continue
+            arcname = os.path.relpath(file_path, base_dir)
+            zipf.write(file_path, arcname)
+
+print(f'Created: {zip_filename}')
+EOF
+```
+
+This script preserves the directory structure by using `os.walk()` and maintaining relative paths with `os.path.relpath()`.
+
 ## Test and Live website environments
 
 ### PHP and WordPress versions
