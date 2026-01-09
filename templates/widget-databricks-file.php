@@ -219,6 +219,129 @@ $display = $atts['display'];
     color: #333;
     word-break: break-word;
 }
+
+.tpa-filter-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.tpa-company-list-box,
+.tpa-filters-box {
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.tpa-box-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #0073aa;
+}
+
+.tpa-company-count {
+    font-size: 12px;
+    color: #666;
+    margin-left: 10px;
+    font-weight: normal;
+}
+
+.tpa-company-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 10px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px;
+}
+
+.tpa-company-item {
+    padding: 6px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 13px;
+    transition: background 0.2s;
+}
+
+.tpa-company-item:last-child {
+    border-bottom: none;
+}
+
+.tpa-company-item:hover {
+    background: #e8f4f8;
+}
+
+.tpa-company-item.active {
+    background: #0073aa;
+    color: white;
+    font-weight: 600;
+}
+
+.tpa-filter-group {
+    margin-bottom: 15px;
+}
+
+.tpa-filter-label {
+    font-weight: 600;
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.tpa-filter-inputs {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.tpa-filter-inputs input[type="number"] {
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 100px;
+    font-size: 13px;
+}
+
+.tpa-filter-inputs label {
+    font-size: 12px;
+    color: #666;
+}
+
+.tpa-filter-actions {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+.tpa-filter-actions button {
+    padding: 6px 15px;
+    background: #0073aa;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.3s;
+}
+
+.tpa-filter-actions button:hover {
+    background: #005a87;
+}
+
+.tpa-filter-actions button.secondary {
+    background: #666;
+}
+
+.tpa-filter-actions button.secondary:hover {
+    background: #444;
+}
 </style>
 
 <div class="tpa-widget tpa-databricks-file-widget tpa-lead-viewer" id="<?php echo esc_attr($widget_id); ?>">
@@ -244,6 +367,35 @@ $display = $atts['display'];
                 <input type="number" id="lead-number-<?php echo esc_attr($widget_id); ?>" min="1" placeholder="Enter number">
                 <button class="tpa-search-lead">View Lead</button>
                 <button class="tpa-show-all">Show All</button>
+            </div>
+
+            <div class="tpa-filter-container">
+                <div class="tpa-company-list-box">
+                    <div class="tpa-box-title">
+                        Companies
+                        <span class="tpa-company-count">(0 of 0)</span>
+                    </div>
+                    <div class="tpa-company-list"></div>
+                </div>
+
+                <div class="tpa-filters-box">
+                    <div class="tpa-box-title">Filters</div>
+
+                    <div class="tpa-filter-group">
+                        <label class="tpa-filter-label">Turnover</label>
+                        <div class="tpa-filter-inputs">
+                            <label>Min:</label>
+                            <input type="number" id="turnover-min-<?php echo esc_attr($widget_id); ?>" value="0" min="0" step="1000">
+                            <label>Max:</label>
+                            <input type="number" id="turnover-max-<?php echo esc_attr($widget_id); ?>" value="" placeholder="No max">
+                        </div>
+                    </div>
+
+                    <div class="tpa-filter-actions">
+                        <button class="tpa-apply-filters">Apply Filters</button>
+                        <button class="tpa-clear-filters secondary">Clear</button>
+                    </div>
+                </div>
             </div>
 
             <div class="tpa-lead-navigation" style="display: none;">
@@ -306,10 +458,20 @@ $display = $atts['display'];
         var widgetId = '<?php echo esc_js($widget_id); ?>';
         var filePath = '<?php echo esc_js($file_path); ?>';
         var allLeads = [];
-        var currentIndex = 0;
+        var filteredLeads = []; // Filtered list of leads
+        var currentIndex = 0; // Index in filteredLeads, not allLeads
+        var renderedTabs = {}; // Track which tabs have been rendered for the current lead
+
+        // Store separate datasets for each tab
+        var scriptsDataCache = {}; // Map of lead index to scripts data
+        var fameDataCache = {}; // Map of lead index to fame data
+        var chDataCache = {}; // Map of lead index to companies house data
+        var loadedTabFiles = {}; // Track which tab files have been loaded
 
         var $widget = $('#' + widgetId);
         var $leadNumber = $('#lead-number-' + widgetId);
+        var $turnoverMin = $('#turnover-min-' + widgetId);
+        var $turnoverMax = $('#turnover-max-' + widgetId);
 
         // Update timestamp
         function updateTimestamp() {
@@ -327,11 +489,15 @@ $display = $atts['display'];
             $widget.find('.tpa-last-updated').text('(Last updated: ' + dateString + ' ' + timeString + ')');
         }
 
-        // Load widget data
+        // Load widget data - only loads overview data
         function loadFileData() {
             $widget.find('.tpa-widget-loading').show();
             $widget.find('.tpa-widget-content').hide();
             $widget.find('.tpa-widget-error').hide();
+
+            // Determine the overview file path
+            var basePath = filePath.replace(/leads\.json$/, '');
+            var overviewPath = basePath + 'leads-overview.json';
 
             $.ajax({
                 url: tpaAjax.ajaxUrl,
@@ -339,7 +505,7 @@ $display = $atts['display'];
                 data: {
                     action: 'tpa_load_databricks_file',
                     nonce: tpaAjax.nonce,
-                    file_path: filePath
+                    file_path: overviewPath
                 },
                 success: function(response) {
                     if (response.success) {
@@ -370,14 +536,21 @@ $display = $atts['display'];
                             allLeads = [data];
                         }
 
-                        console.log('Loaded ' + allLeads.length + ' leads');
+                        console.log('Loaded ' + allLeads.length + ' leads from overview');
+
+                        // Initialize filtered leads to all leads
+                        filteredLeads = allLeads.slice();
+
+                        // Populate company list
+                        populateCompanyList();
+
                         currentIndex = 0;
                         showLead(currentIndex);
                         updateTimestamp();
                         $widget.find('.tpa-widget-loading').hide();
                         $widget.find('.tpa-widget-content').show();
                     } else {
-                        showError(response.data.message || 'Failed to load file');
+                        showError(response.data.message || 'Failed to load overview file');
                     }
                 },
                 error: function() {
@@ -386,30 +559,213 @@ $display = $atts['display'];
             });
         }
 
+        // Load tab data from separate JSON files
+        function loadTabData(tabName, callback) {
+            var basePath = filePath.replace(/leads\.json$/, '');
+            var tabFilePath;
+
+            switch(tabName) {
+                case 'scripts':
+                    tabFilePath = basePath + 'leads-scripts.json';
+                    break;
+                case 'general':
+                    tabFilePath = basePath + 'leads-fame.json';
+                    break;
+                case 'companies-house':
+                    tabFilePath = basePath + 'leads-companies-house.json';
+                    break;
+                default:
+                    return;
+            }
+
+            // Check if we've already loaded this tab file
+            if (loadedTabFiles[tabName]) {
+                callback();
+                return;
+            }
+
+            $.ajax({
+                url: tpaAjax.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'tpa_load_databricks_file',
+                    nonce: tpaAjax.nonce,
+                    file_path: tabFilePath
+                },
+                success: function(response) {
+                    if (response.success) {
+                        var data = response.data;
+
+                        // Handle different JSON structures
+                        if (Array.isArray(data)) {
+                            // Do nothing, we'll use data as is
+                        } else if (typeof data === 'object' && data !== null) {
+                            if (Array.isArray(data.leads)) {
+                                data = data.leads;
+                            } else if (Array.isArray(data.data)) {
+                                data = data.data;
+                            } else if (Array.isArray(data.results)) {
+                                data = data.results;
+                            } else if (Array.isArray(data.items)) {
+                                data = data.items;
+                            }
+                        }
+
+                        // Store data in the appropriate cache
+                        if (Array.isArray(data)) {
+                            data.forEach(function(item, index) {
+                                switch(tabName) {
+                                    case 'scripts':
+                                        scriptsDataCache[index] = item;
+                                        break;
+                                    case 'general':
+                                        fameDataCache[index] = item;
+                                        break;
+                                    case 'companies-house':
+                                        chDataCache[index] = item;
+                                        break;
+                                }
+                            });
+                        }
+
+                        loadedTabFiles[tabName] = true;
+                        console.log('Loaded ' + tabName + ' data');
+                        callback();
+                    } else {
+                        console.error('Failed to load ' + tabName + ' data: ' + (response.data.message || 'Unknown error'));
+                        callback();
+                    }
+                },
+                error: function() {
+                    console.error('Network error loading ' + tabName + ' data');
+                    callback();
+                }
+            });
+        }
+
+        // Populate the company list
+        function populateCompanyList() {
+            var $list = $widget.find('.tpa-company-list');
+            var $count = $widget.find('.tpa-company-count');
+
+            $list.empty();
+
+            if (filteredLeads.length === 0) {
+                $list.html('<div style="padding: 20px; text-align: center; color: #999;">No companies match the filters</div>');
+                $count.text('(0 of ' + allLeads.length + ')');
+                return;
+            }
+
+            filteredLeads.forEach(function(lead, index) {
+                var companyName = getCompanyName(lead);
+                var $item = $('<div class="tpa-company-item">')
+                    .text(companyName)
+                    .data('index', index);
+
+                if (index === currentIndex) {
+                    $item.addClass('active');
+                }
+
+                $list.append($item);
+            });
+
+            $count.text('(' + filteredLeads.length + ' of ' + allLeads.length + ')');
+        }
+
+        // Get company name from lead data
+        function getCompanyName(lead) {
+            // Try different possible field names
+            if (lead.business_name) return lead.business_name;
+            if (lead.Business_Name) return lead.Business_Name;
+            if (lead.company_name) return lead.company_name;
+            if (lead.Company_Name) return lead.Company_Name;
+            if (lead.name) return lead.name;
+            if (lead.Name) return lead.Name;
+
+            // Fallback to registered number
+            if (lead.registered_number) return 'Company ' + lead.registered_number;
+            if (lead.Registered_Number) return 'Company ' + lead.Registered_Number;
+
+            return 'Unknown Company';
+        }
+
+        // Get turnover value from lead data
+        function getTurnover(lead) {
+            if (lead.turnover !== undefined && lead.turnover !== null) {
+                return parseFloat(lead.turnover);
+            }
+            if (lead.Turnover !== undefined && lead.Turnover !== null) {
+                return parseFloat(lead.Turnover);
+            }
+            return 0;
+        }
+
+        // Apply filters
+        function applyFilters() {
+            var minTurnover = parseFloat($turnoverMin.val()) || 0;
+            var maxTurnover = parseFloat($turnoverMax.val()) || Infinity;
+
+            filteredLeads = allLeads.filter(function(lead) {
+                var turnover = getTurnover(lead);
+                return turnover >= minTurnover && turnover <= maxTurnover;
+            });
+
+            // Reset to first lead in filtered list
+            currentIndex = 0;
+
+            // Update UI
+            populateCompanyList();
+            if (filteredLeads.length > 0) {
+                showLead(0);
+            } else {
+                $widget.find('.tpa-lead-navigation').hide();
+                $widget.find('.tpa-lead-tabs').hide();
+                $widget.find('.tpa-file-data-overview').html('<div class="tpa-lead-no-data">No leads match the current filters</div>');
+            }
+        }
+
+        // Clear filters
+        function clearFilters() {
+            $turnoverMin.val(0);
+            $turnoverMax.val('');
+
+            filteredLeads = allLeads.slice();
+            currentIndex = 0;
+
+            populateCompanyList();
+            if (filteredLeads.length > 0) {
+                showLead(0);
+            }
+        }
+
         function showLead(index) {
-            if (!allLeads || allLeads.length === 0) {
+            if (!filteredLeads || filteredLeads.length === 0) {
                 $widget.find('.tpa-file-data-general').html('<div class="tpa-lead-no-data">No leads found</div>');
                 $widget.find('.tpa-lead-navigation').hide();
                 $widget.find('.tpa-lead-tabs').hide();
                 return;
             }
 
-            if (index < 0 || index >= allLeads.length) {
+            if (index < 0 || index >= filteredLeads.length) {
                 return;
             }
 
             currentIndex = index;
-            var lead = allLeads[index];
+            var lead = filteredLeads[index];
 
             // Update navigation
             $widget.find('.tpa-lead-navigation').show();
             $widget.find('.tpa-current-position .current').text(index + 1);
-            $widget.find('.tpa-current-position .total').text(allLeads.length);
+            $widget.find('.tpa-current-position .total').text(filteredLeads.length);
             $widget.find('.tpa-prev-lead').prop('disabled', index === 0);
-            $widget.find('.tpa-next-lead').prop('disabled', index === allLeads.length - 1);
+            $widget.find('.tpa-next-lead').prop('disabled', index === filteredLeads.length - 1);
 
             // Update lead number input
             $leadNumber.val(index + 1);
+
+            // Update company list highlighting
+            $widget.find('.tpa-company-item').removeClass('active');
+            $widget.find('.tpa-company-item').eq(index).addClass('active');
 
             // Reset to first tab (Overview)
             $widget.find('.tpa-lead-tab').removeClass('active');
@@ -681,48 +1037,54 @@ $display = $atts['display'];
             // Show tabs
             $widget.find('.tpa-lead-tabs').show();
 
-            // Separate companies house data, scripts data, and general data
-            var companiesHouse = null;
-            var scriptsData = {};
-            var generalData = {};
+            // Reset rendered tabs tracking for new lead
+            renderedTabs = {
+                overview: true // Overview is always rendered initially
+            };
 
-            for (var key in lead) {
-                if (lead.hasOwnProperty(key)) {
-                    var lowerKey = key.toLowerCase();
+            // Render overview data immediately
+            renderOverviewData(lead);
+        }
 
-                    // Check for companies house field (various spellings)
-                    if (lowerKey === 'companies_house' ||
-                        lowerKey === 'companie_house' ||
-                        lowerKey === 'companieshouse' ||
-                        lowerKey === 'companies house') {
-                        companiesHouse = lead[key];
-                    }
-                    // Check for scripts fields
-                    else if (lowerKey === 'call_script' || lowerKey === 'call script' ||
-                             lowerKey === 'email_template' || lowerKey === 'email template') {
-                        scriptsData[key] = lead[key];
-                    }
-                    // Everything else goes to general data
-                    else {
-                        generalData[key] = lead[key];
-                    }
-                }
+        function renderTabContent(tabName) {
+            // If already rendered for this lead, do nothing
+            if (renderedTabs[tabName]) {
+                return;
             }
 
-            // Render overview data
-            renderOverviewData(lead);
+            // Load tab data if needed, then render
+            loadTabData(tabName, function() {
+                var data = null;
 
-            // Render scripts data
-            renderScriptsData(scriptsData);
+                // Find the original index in allLeads for the current filtered lead
+                var lead = filteredLeads[currentIndex];
+                var originalIndex = allLeads.indexOf(lead);
 
-            // Render general data (FAME)
-            renderGeneralData(generalData);
+                switch(tabName) {
+                    case 'scripts':
+                        data = scriptsDataCache[originalIndex];
+                        renderScriptsData(data);
+                        break;
+                    case 'general':
+                        data = fameDataCache[originalIndex];
+                        renderGeneralData(data);
+                        break;
+                    case 'companies-house':
+                        data = chDataCache[originalIndex];
+                        renderCompaniesHouseData(data);
+                        break;
+                }
 
-            // Render companies house data
-            renderCompaniesHouseData(companiesHouse);
+                renderedTabs[tabName] = true;
+            });
         }
 
         function renderGeneralData(data) {
+            if (!data || (typeof data === 'object' && Object.keys(data).length === 0)) {
+                $widget.find('.tpa-file-data-general').html('<div class="tpa-lead-no-data">No FAME data available</div>');
+                return;
+            }
+
             var html = '<div class="tpa-lead-card">';
 
             for (var key in data) {
@@ -969,7 +1331,7 @@ $display = $atts['display'];
         }
 
         function showAllLeads() {
-            if (!allLeads || allLeads.length === 0) {
+            if (!filteredLeads || filteredLeads.length === 0) {
                 return;
             }
 
@@ -982,7 +1344,7 @@ $display = $atts['display'];
             html += '<table class="tpa-data-table">';
 
             // Header
-            var keys = Object.keys(allLeads[0]);
+            var keys = Object.keys(filteredLeads[0]);
             html += '<thead><tr>';
             html += '<th style="position: sticky; top: 0; background: #f7f7f7; z-index: 1;">#</th>';
             keys.forEach(function(key) {
@@ -993,7 +1355,7 @@ $display = $atts['display'];
 
             // Body
             html += '<tbody>';
-            allLeads.forEach(function(lead, idx) {
+            filteredLeads.forEach(function(lead, idx) {
                 html += '<tr>';
                 html += '<td>' + (idx + 1) + '</td>';
                 keys.forEach(function(key) {
@@ -1053,10 +1415,10 @@ $display = $atts['display'];
 
         $widget.find('.tpa-search-lead').on('click', function() {
             var leadNum = parseInt($leadNumber.val());
-            if (leadNum && leadNum > 0 && leadNum <= allLeads.length) {
+            if (leadNum && leadNum > 0 && leadNum <= filteredLeads.length) {
                 showLead(leadNum - 1);
             } else {
-                alert('Please enter a valid lead number between 1 and ' + allLeads.length);
+                alert('Please enter a valid lead number between 1 and ' + filteredLeads.length);
             }
         });
 
@@ -1085,6 +1447,26 @@ $display = $atts['display'];
             // Update tab content
             $widget.find('.tpa-tab-content').removeClass('active');
             $widget.find('#tab-' + tabName).addClass('active');
+
+            // Render tab content if not already rendered (lazy loading)
+            if (!renderedTabs[tabName]) {
+                renderTabContent(tabName);
+            }
+        });
+
+        // Filter buttons
+        $widget.find('.tpa-apply-filters').on('click', function() {
+            applyFilters();
+        });
+
+        $widget.find('.tpa-clear-filters').on('click', function() {
+            clearFilters();
+        });
+
+        // Company list item click
+        $widget.on('click', '.tpa-company-item', function() {
+            var index = $(this).data('index');
+            showLead(index);
         });
 
         // Initial load
