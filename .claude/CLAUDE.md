@@ -26,13 +26,11 @@ When making changes to this plugin project, always test it using the Local WP si
 
 ### Creating Deployment Package
 
-A .zip version of the plugin is created for uploading to the live WordPress site.
+A .zip version of the plugin needs to be created for uploading to the live WordPress site.
 
 **Naming Convention**: `trimontium-wp-private-dashboards-YYYYMMDD-HHMM.zip` (includes timestamp)
 
-**Note**: The .zip file is excluded from version control (see .gitignore). When  instructed to create the deployment .zip package inside the project folder to keep all the files together.
-
-If told to 'Prod' it means to do this process.
+**Note**: The .zip file is excluded from version control (see .gitignore). When  instructed to create the deployment .zip package inside the project folder to keep all the files together. If told to 'Prod' it means to do this process. Just keep a single .zip file as the output, delete any additional files like .tar.gz that get created when creating the .zip file.
 
 **CRITICAL - MUST PRESERVE DIRECTORY STRUCTURE:**
 

@@ -253,11 +253,16 @@ $display = $atts['display'];
             </div>
 
             <div class="tpa-lead-tabs" style="display: none;">
-                <button class="tpa-lead-tab active" data-tab="general">General Information</button>
+                <button class="tpa-lead-tab active" data-tab="overview">Overview</button>
+                <button class="tpa-lead-tab" data-tab="general">FAME</button>
                 <button class="tpa-lead-tab" data-tab="companies-house">Companies House</button>
             </div>
 
-            <div id="tab-general" class="tpa-tab-content active">
+            <div id="tab-overview" class="tpa-tab-content active">
+                <div class="tpa-file-data-overview"></div>
+            </div>
+
+            <div id="tab-general" class="tpa-tab-content">
                 <div class="tpa-file-data-general"></div>
             </div>
 
@@ -401,11 +406,11 @@ $display = $atts['display'];
             // Update lead number input
             $leadNumber.val(index + 1);
 
-            // Reset to first tab
+            // Reset to first tab (Overview)
             $widget.find('.tpa-lead-tab').removeClass('active');
-            $widget.find('.tpa-lead-tab[data-tab="general"]').addClass('active');
+            $widget.find('.tpa-lead-tab[data-tab="overview"]').addClass('active');
             $widget.find('.tpa-tab-content').removeClass('active');
-            $widget.find('#tab-general').addClass('active');
+            $widget.find('#tab-overview').addClass('active');
 
             // Render lead
             renderLead(lead);
@@ -485,6 +490,139 @@ $display = $atts['display'];
             return '£' + formatted;
         }
 
+        function renderOverviewData(lead) {
+            // Define the scoring fields (top section with box)
+            var scoringFields = [
+                'rank',
+                'score',
+                'explanation'
+            ];
+
+            // Define the company info fields (bottom section)
+            var companyFields = [
+                'business_name',
+                'registered_number',
+                'postcode',
+                'company_status',
+                'legal_form',
+                'trade_description',
+                'sic_description',
+                'email',
+                'website',
+                'turnover',
+                'employees'
+            ];
+
+            var html = '';
+            var foundAny = false;
+
+            // Render scoring section with box
+            var scoringHtml = '<div class="tpa-lead-card" style="background: #f0f7ff; border: 2px solid #0073aa; margin-bottom: 20px;">';
+            var foundScoring = false;
+
+            scoringFields.forEach(function(fieldKey) {
+                // Try to find the field in the lead data (case-insensitive)
+                var value = null;
+
+                for (var key in lead) {
+                    if (lead.hasOwnProperty(key)) {
+                        if (key.toLowerCase().replace(/ /g, '_') === fieldKey.toLowerCase()) {
+                            value = lead[key];
+                            foundScoring = true;
+                            foundAny = true;
+                            break;
+                        }
+                    }
+                }
+
+                // Format the label - capitalize first letter
+                var label = fieldKey.replace(/_/g, ' ').replace(/\b\w/g, function(l) {
+                    return l.toUpperCase();
+                });
+
+                // Format the value
+                var formattedValue;
+                if (value === null || value === undefined) {
+                    formattedValue = '-';
+                } else {
+                    formattedValue = formatValue(value);
+                }
+
+                scoringHtml += '<div class="tpa-lead-field">';
+                scoringHtml += '<div class="tpa-lead-field-label">' + escapeHtml(label) + ':</div>';
+                scoringHtml += '<div class="tpa-lead-field-value">' + formattedValue + '</div>';
+                scoringHtml += '</div>';
+            });
+
+            scoringHtml += '</div>';
+
+            if (foundScoring) {
+                html += scoringHtml;
+            }
+
+            // Render company info section
+            var companyHtml = '<div class="tpa-lead-card">';
+            var foundCompany = false;
+
+            companyFields.forEach(function(fieldKey) {
+                // Try to find the field in the lead data (case-insensitive)
+                var value = null;
+
+                for (var key in lead) {
+                    if (lead.hasOwnProperty(key)) {
+                        if (key.toLowerCase().replace(/ /g, '_') === fieldKey.toLowerCase()) {
+                            value = lead[key];
+                            foundCompany = true;
+                            foundAny = true;
+                            break;
+                        }
+                    }
+                }
+
+                // Format the label
+                var label = fieldKey.replace(/_/g, ' ').replace(/\b\w/g, function(l) {
+                    return l.toUpperCase();
+                });
+
+                // Format the value
+                var formattedValue;
+                if (value === null || value === undefined) {
+                    formattedValue = '-';
+                } else if (fieldKey === 'turnover') {
+                    formattedValue = formatCurrency(value);
+                } else if (fieldKey === 'website' && value && value !== '-') {
+                    // Make website clickable
+                    var url = String(value);
+                    if (!url.match(/^https?:\/\//)) {
+                        url = 'http://' + url;
+                    }
+                    formattedValue = '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(String(value)) + '</a>';
+                } else if (fieldKey === 'email' && value && value !== '-') {
+                    // Make email clickable
+                    formattedValue = '<a href="mailto:' + escapeHtml(String(value)) + '">' + escapeHtml(String(value)) + '</a>';
+                } else {
+                    formattedValue = formatValue(value);
+                }
+
+                companyHtml += '<div class="tpa-lead-field">';
+                companyHtml += '<div class="tpa-lead-field-label">' + escapeHtml(label) + ':</div>';
+                companyHtml += '<div class="tpa-lead-field-value">' + formattedValue + '</div>';
+                companyHtml += '</div>';
+            });
+
+            companyHtml += '</div>';
+
+            if (foundCompany) {
+                html += companyHtml;
+            }
+
+            if (!foundAny) {
+                html = '<div class="tpa-lead-no-data">No overview data available</div>';
+            }
+
+            $widget.find('.tpa-file-data-overview').html(html);
+        }
+
         function renderLead(lead) {
             // Show tabs
             $widget.find('.tpa-lead-tabs').show();
@@ -507,7 +645,10 @@ $display = $atts['display'];
                 }
             }
 
-            // Render general data
+            // Render overview data
+            renderOverviewData(lead);
+
+            // Render general data (FAME)
             renderGeneralData(generalData);
 
             // Render companies house data
