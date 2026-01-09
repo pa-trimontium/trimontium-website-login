@@ -225,6 +225,7 @@ $display = $atts['display'];
     grid-template-columns: 1fr 1fr;
     gap: 15px;
     margin: 20px 0;
+    align-items: start;
 }
 
 .tpa-company-list-box,
@@ -252,7 +253,7 @@ $display = $atts['display'];
 }
 
 .tpa-company-list {
-    max-height: 300px;
+    max-height: 380px;
     overflow-y: auto;
     margin-top: 10px;
     background: white;
@@ -1108,11 +1109,8 @@ $display = $atts['display'];
                 'registered_number',
                 'postcode',
                 'company_status',
-                'legal_form',
                 'trade_description',
                 'sic_description',
-                'email',
-                'website',
                 'turnover',
                 'employees'
             ];
