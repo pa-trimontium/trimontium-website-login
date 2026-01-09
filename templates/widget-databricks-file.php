@@ -342,6 +342,73 @@ $display = $atts['display'];
 .tpa-filter-actions button.secondary:hover {
     background: #444;
 }
+
+.tpa-postcode-areas {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 5px;
+    margin-top: 8px;
+    max-height: 150px;
+    overflow-y: auto;
+    padding: 8px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.tpa-postcode-area-item {
+    display: flex;
+    align-items: center;
+    font-size: 11px;
+}
+
+.tpa-postcode-area-item input[type="checkbox"] {
+    margin-right: 3px;
+    cursor: pointer;
+}
+
+.tpa-postcode-area-item label {
+    cursor: pointer;
+    margin: 0;
+}
+
+.tpa-postcode-actions {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+}
+
+.tpa-postcode-actions button {
+    padding: 4px 10px;
+    background: #e0e0e0;
+    color: #333;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.tpa-postcode-actions button:hover {
+    background: #d0d0d0;
+}
+
+.tpa-filter-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.tpa-filter-checkbox input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.tpa-filter-checkbox label {
+    cursor: pointer;
+    font-size: 13px;
+    color: #555;
+    margin: 0;
+}
 </style>
 
 <div class="tpa-widget tpa-databricks-file-widget tpa-lead-viewer" id="<?php echo esc_attr($widget_id); ?>">
@@ -388,6 +455,35 @@ $display = $atts['display'];
                             <input type="number" id="turnover-min-<?php echo esc_attr($widget_id); ?>" value="0" min="0" step="1000">
                             <label>Max:</label>
                             <input type="number" id="turnover-max-<?php echo esc_attr($widget_id); ?>" value="" placeholder="No max">
+                        </div>
+                    </div>
+
+                    <div class="tpa-filter-group">
+                        <label class="tpa-filter-label">Employees</label>
+                        <div class="tpa-filter-inputs">
+                            <label>Min:</label>
+                            <input type="number" id="employees-min-<?php echo esc_attr($widget_id); ?>" value="0" min="0" step="1">
+                            <label>Max:</label>
+                            <input type="number" id="employees-max-<?php echo esc_attr($widget_id); ?>" value="" placeholder="No max">
+                        </div>
+                    </div>
+
+                    <div class="tpa-filter-group">
+                        <label class="tpa-filter-label">Status</label>
+                        <div class="tpa-filter-checkbox">
+                            <input type="checkbox" id="active-only-<?php echo esc_attr($widget_id); ?>" checked>
+                            <label for="active-only-<?php echo esc_attr($widget_id); ?>">Active companies only</label>
+                        </div>
+                    </div>
+
+                    <div class="tpa-filter-group">
+                        <label class="tpa-filter-label">Postcode Areas</label>
+                        <div class="tpa-postcode-actions">
+                            <button class="tpa-check-all-postcodes">Check All</button>
+                            <button class="tpa-check-none-postcodes">Check None</button>
+                        </div>
+                        <div class="tpa-postcode-areas" id="postcode-areas-<?php echo esc_attr($widget_id); ?>">
+                            <!-- Populated by JavaScript -->
                         </div>
                     </div>
 
@@ -472,6 +568,56 @@ $display = $atts['display'];
         var $leadNumber = $('#lead-number-' + widgetId);
         var $turnoverMin = $('#turnover-min-' + widgetId);
         var $turnoverMax = $('#turnover-max-' + widgetId);
+        var $employeesMin = $('#employees-min-' + widgetId);
+        var $employeesMax = $('#employees-max-' + widgetId);
+        var $activeOnly = $('#active-only-' + widgetId);
+        var $postcodeAreas = $('#postcode-areas-' + widgetId);
+
+        // All UK postcode areas
+        var allPostcodeAreas = [
+            'AB', 'AL', 'B', 'BA', 'BB', 'BD', 'BF', 'BH', 'BL', 'BN', 'BR', 'BS', 'BT', 'BX',
+            'CA', 'CB', 'CF', 'CH', 'CM', 'CO', 'CR', 'CT', 'CV', 'CW',
+            'DA', 'DD', 'DE', 'DG', 'DH', 'DL', 'DN', 'DT', 'DY',
+            'E', 'EC', 'EH', 'EN', 'EX',
+            'FK', 'FY',
+            'G', 'GL', 'GU', 'GY',
+            'HA', 'HD', 'HG', 'HP', 'HR', 'HS', 'HU', 'HX',
+            'IG', 'IM', 'IP', 'IV',
+            'JE',
+            'KA', 'KT', 'KW', 'KY',
+            'L', 'LA', 'LD', 'LE', 'LL', 'LN', 'LS', 'LU',
+            'M', 'ME', 'MK', 'ML',
+            'N', 'NE', 'NG', 'NN', 'NP', 'NR', 'NW',
+            'OL', 'OX',
+            'PA', 'PE', 'PH', 'PL', 'PO', 'PR',
+            'RG', 'RH', 'RM',
+            'S', 'SA', 'SE', 'SG', 'SK', 'SL', 'SM', 'SN', 'SO', 'SP', 'SR', 'SS', 'ST', 'SW', 'SY',
+            'TA', 'TD', 'TF', 'TN', 'TQ', 'TR', 'TS', 'TW',
+            'UB',
+            'W', 'WA', 'WC', 'WD', 'WF', 'WN', 'WR', 'WS', 'WV',
+            'YO',
+            'ZE'
+        ];
+
+        // Initialize postcode area checkboxes
+        function initPostcodeAreas() {
+            $postcodeAreas.empty();
+
+            allPostcodeAreas.forEach(function(area) {
+                var checkboxId = 'postcode-' + area + '-' + widgetId;
+                var $item = $('<div class="tpa-postcode-area-item">');
+                var $checkbox = $('<input type="checkbox" checked>')
+                    .attr('id', checkboxId)
+                    .attr('value', area)
+                    .addClass('tpa-postcode-checkbox');
+                var $label = $('<label>')
+                    .attr('for', checkboxId)
+                    .text(area);
+
+                $item.append($checkbox).append($label);
+                $postcodeAreas.append($item);
+            });
+        }
 
         // Update timestamp
         function updateTimestamp() {
@@ -540,6 +686,9 @@ $display = $atts['display'];
 
                         // Initialize filtered leads to all leads
                         filteredLeads = allLeads.slice();
+
+                        // Initialize postcode areas
+                        initPostcodeAreas();
 
                         // Populate company list
                         populateCompanyList();
@@ -700,14 +849,85 @@ $display = $atts['display'];
             return 0;
         }
 
+        // Get employee count from lead data
+        function getEmployees(lead) {
+            if (lead.employees !== undefined && lead.employees !== null) {
+                return parseFloat(lead.employees);
+            }
+            if (lead.Employees !== undefined && lead.Employees !== null) {
+                return parseFloat(lead.Employees);
+            }
+            if (lead.employee_count !== undefined && lead.employee_count !== null) {
+                return parseFloat(lead.employee_count);
+            }
+            return 0;
+        }
+
+        // Get active status from lead data
+        function isActive(lead) {
+            var status = lead.company_status || lead.Company_Status || lead.status || lead.Status || '';
+            if (typeof status === 'string') {
+                status = status.toLowerCase();
+                return status === 'active' || status === 'live';
+            }
+            if (typeof status === 'boolean') {
+                return status;
+            }
+            // Default to true if no status field
+            return true;
+        }
+
+        // Get postcode area from lead data
+        function getPostcodeArea(lead) {
+            var postcode = lead.postcode || lead.Postcode || lead.postal_code || lead.Postal_Code || '';
+            if (!postcode) return '';
+
+            // Extract the area (letters before the first digit)
+            var match = String(postcode).trim().match(/^([A-Z]+)/i);
+            return match ? match[1].toUpperCase() : '';
+        }
+
         // Apply filters
         function applyFilters() {
             var minTurnover = parseFloat($turnoverMin.val()) || 0;
             var maxTurnover = parseFloat($turnoverMax.val()) || Infinity;
+            var minEmployees = parseFloat($employeesMin.val()) || 0;
+            var maxEmployees = parseFloat($employeesMax.val()) || Infinity;
+            var activeOnlyChecked = $activeOnly.is(':checked');
+
+            // Get selected postcode areas
+            var selectedPostcodes = [];
+            $postcodeAreas.find('.tpa-postcode-checkbox:checked').each(function() {
+                selectedPostcodes.push($(this).val());
+            });
 
             filteredLeads = allLeads.filter(function(lead) {
+                // Turnover filter
                 var turnover = getTurnover(lead);
-                return turnover >= minTurnover && turnover <= maxTurnover;
+                if (turnover < minTurnover || turnover > maxTurnover) {
+                    return false;
+                }
+
+                // Employees filter
+                var employees = getEmployees(lead);
+                if (employees < minEmployees || employees > maxEmployees) {
+                    return false;
+                }
+
+                // Active status filter
+                if (activeOnlyChecked && !isActive(lead)) {
+                    return false;
+                }
+
+                // Postcode area filter
+                if (selectedPostcodes.length > 0) {
+                    var postcodeArea = getPostcodeArea(lead);
+                    if (!postcodeArea || selectedPostcodes.indexOf(postcodeArea) === -1) {
+                        return false;
+                    }
+                }
+
+                return true;
             });
 
             // Reset to first lead in filtered list
@@ -728,6 +948,12 @@ $display = $atts['display'];
         function clearFilters() {
             $turnoverMin.val(0);
             $turnoverMax.val('');
+            $employeesMin.val(0);
+            $employeesMax.val('');
+            $activeOnly.prop('checked', true);
+
+            // Check all postcode areas
+            $postcodeAreas.find('.tpa-postcode-checkbox').prop('checked', true);
 
             filteredLeads = allLeads.slice();
             currentIndex = 0;
@@ -1467,6 +1693,15 @@ $display = $atts['display'];
         $widget.on('click', '.tpa-company-item', function() {
             var index = $(this).data('index');
             showLead(index);
+        });
+
+        // Postcode area check all/none
+        $widget.find('.tpa-check-all-postcodes').on('click', function() {
+            $postcodeAreas.find('.tpa-postcode-checkbox').prop('checked', true);
+        });
+
+        $widget.find('.tpa-check-none-postcodes').on('click', function() {
+            $postcodeAreas.find('.tpa-postcode-checkbox').prop('checked', false);
         });
 
         // Initial load
