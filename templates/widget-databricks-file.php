@@ -254,12 +254,17 @@ $display = $atts['display'];
 
             <div class="tpa-lead-tabs" style="display: none;">
                 <button class="tpa-lead-tab active" data-tab="overview">Overview</button>
+                <button class="tpa-lead-tab" data-tab="scripts">Scripts</button>
                 <button class="tpa-lead-tab" data-tab="general">FAME</button>
                 <button class="tpa-lead-tab" data-tab="companies-house">Companies House</button>
             </div>
 
             <div id="tab-overview" class="tpa-tab-content active">
                 <div class="tpa-file-data-overview"></div>
+            </div>
+
+            <div id="tab-scripts" class="tpa-tab-content">
+                <div class="tpa-file-data-scripts"></div>
             </div>
 
             <div id="tab-general" class="tpa-tab-content">
@@ -623,23 +628,82 @@ $display = $atts['display'];
             $widget.find('.tpa-file-data-overview').html(html);
         }
 
+        function renderScriptsData(scriptsData) {
+            if (!scriptsData || Object.keys(scriptsData).length === 0) {
+                $widget.find('.tpa-file-data-scripts').html('<div class="tpa-lead-no-data">No scripts available</div>');
+                return;
+            }
+
+            var html = '<div class="tpa-lead-card">';
+
+            // Define the order and custom labels for script fields
+            var scriptFields = [
+                { key: 'call_script', label: 'Call Script' },
+                { key: 'email_template', label: 'Email Template' }
+            ];
+
+            var foundAny = false;
+
+            scriptFields.forEach(function(field) {
+                // Try to find the field in the scripts data (case-insensitive)
+                var value = null;
+
+                for (var key in scriptsData) {
+                    if (scriptsData.hasOwnProperty(key)) {
+                        if (key.toLowerCase().replace(/ /g, '_') === field.key.toLowerCase()) {
+                            value = scriptsData[key];
+                            foundAny = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (value !== null && value !== undefined && value !== '') {
+                    var formattedValue = formatValue(value);
+
+                    html += '<div class="tpa-lead-field">';
+                    html += '<div class="tpa-lead-field-label">' + escapeHtml(field.label) + ':</div>';
+                    html += '<div class="tpa-lead-field-value">' + formattedValue + '</div>';
+                    html += '</div>';
+                }
+            });
+
+            html += '</div>';
+
+            if (!foundAny) {
+                html = '<div class="tpa-lead-no-data">No scripts available</div>';
+            }
+
+            $widget.find('.tpa-file-data-scripts').html(html);
+        }
+
         function renderLead(lead) {
             // Show tabs
             $widget.find('.tpa-lead-tabs').show();
 
-            // Separate companies house data from general data
+            // Separate companies house data, scripts data, and general data
             var companiesHouse = null;
+            var scriptsData = {};
             var generalData = {};
 
             for (var key in lead) {
                 if (lead.hasOwnProperty(key)) {
+                    var lowerKey = key.toLowerCase();
+
                     // Check for companies house field (various spellings)
-                    if (key.toLowerCase() === 'companies_house' ||
-                        key.toLowerCase() === 'companie_house' ||
-                        key.toLowerCase() === 'companieshouse' ||
-                        key.toLowerCase() === 'companies house') {
+                    if (lowerKey === 'companies_house' ||
+                        lowerKey === 'companie_house' ||
+                        lowerKey === 'companieshouse' ||
+                        lowerKey === 'companies house') {
                         companiesHouse = lead[key];
-                    } else {
+                    }
+                    // Check for scripts fields
+                    else if (lowerKey === 'call_script' || lowerKey === 'call script' ||
+                             lowerKey === 'email_template' || lowerKey === 'email template') {
+                        scriptsData[key] = lead[key];
+                    }
+                    // Everything else goes to general data
+                    else {
                         generalData[key] = lead[key];
                     }
                 }
@@ -647,6 +711,9 @@ $display = $atts['display'];
 
             // Render overview data
             renderOverviewData(lead);
+
+            // Render scripts data
+            renderScriptsData(scriptsData);
 
             // Render general data (FAME)
             renderGeneralData(generalData);
