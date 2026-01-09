@@ -373,7 +373,7 @@ $display = $atts['display'];
 }
 
 .tpa-postcode-area-item.north-west label {
-    color: #003d82;
+    color: #cc0000;
     font-weight: 600;
 }
 
@@ -486,6 +486,7 @@ $display = $atts['display'];
                         <div class="tpa-postcode-actions">
                             <button class="tpa-check-all-postcodes">Check All</button>
                             <button class="tpa-check-none-postcodes">Check None</button>
+                            <button class="tpa-nw-only-postcodes">NW Only</button>
                         </div>
                         <div class="tpa-postcode-areas" id="postcode-areas-<?php echo esc_attr($widget_id); ?>">
                             <!-- Populated by JavaScript -->
@@ -1718,6 +1719,14 @@ $display = $atts['display'];
 
         $widget.find('.tpa-check-none-postcodes').on('click', function() {
             $postcodeAreas.find('.tpa-postcode-checkbox').prop('checked', false);
+        });
+
+        $widget.find('.tpa-nw-only-postcodes').on('click', function() {
+            $postcodeAreas.find('.tpa-postcode-checkbox').prop('checked', false);
+            var northWestAreas = ['BB', 'BL', 'CH', 'CW', 'FY', 'L', 'LA', 'M', 'OL', 'PR', 'SK', 'WA', 'WN'];
+            northWestAreas.forEach(function(area) {
+                $postcodeAreas.find('.tpa-postcode-checkbox[value="' + area + '"]').prop('checked', true);
+            });
         });
 
         // Initial load
