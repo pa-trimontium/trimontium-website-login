@@ -435,13 +435,6 @@ $display = $atts['display'];
         </div>
 
         <div class="tpa-widget-content" style="display: none;">
-            <div class="tpa-lead-search">
-                <label for="lead-number-<?php echo esc_attr($widget_id); ?>">Lead Number:</label>
-                <input type="number" id="lead-number-<?php echo esc_attr($widget_id); ?>" min="1" placeholder="Enter number">
-                <button class="tpa-search-lead">View Lead</button>
-                <button class="tpa-show-all">Show All</button>
-            </div>
-
             <div class="tpa-filter-container">
                 <div class="tpa-company-list-box">
                     <div class="tpa-box-title">
@@ -499,6 +492,12 @@ $display = $atts['display'];
                         <button class="tpa-clear-filters secondary">Clear</button>
                     </div>
                 </div>
+            </div>
+
+            <div class="tpa-lead-search">
+                <label for="lead-number-<?php echo esc_attr($widget_id); ?>">Lead Number:</label>
+                <input type="number" id="lead-number-<?php echo esc_attr($widget_id); ?>" min="1" placeholder="Enter number">
+                <button class="tpa-search-lead">View Lead</button>
             </div>
 
             <div class="tpa-lead-navigation" style="display: none;">
@@ -1661,10 +1660,6 @@ $display = $atts['display'];
             } else {
                 alert('Please enter a valid lead number between 1 and ' + filteredLeads.length);
             }
-        });
-
-        $widget.find('.tpa-show-all').on('click', function() {
-            showAllLeads();
         });
 
         $leadNumber.on('keypress', function(e) {
