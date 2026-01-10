@@ -18,8 +18,10 @@ class TPA_API {
 
     /**
      * Cache expiration time (in seconds)
+     * Set to 7 days to effectively disable auto-refresh
+     * Data only refreshes on manual refresh button click or hard browser refresh
      */
-    const CACHE_EXPIRATION = 30; // 30 seconds
+    const CACHE_EXPIRATION = 604800; // 7 days (auto-refresh disabled)
 
     /**
      * Get singleton instance
