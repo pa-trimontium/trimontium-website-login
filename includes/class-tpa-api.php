@@ -19,7 +19,7 @@ class TPA_API {
     /**
      * Cache expiration time (in seconds)
      */
-    const CACHE_EXPIRATION = 300; // 5 minutes
+    const CACHE_EXPIRATION = 30; // 30 seconds
 
     /**
      * Get singleton instance
@@ -319,8 +319,9 @@ class TPA_API {
     /**
      * Read file from Databricks Volume
      */
-    public static function read_databricks_file($file_path) {
+    public static function read_databricks_file($file_path, $force_refresh = false) {
         self::add_diagnostic_log('API: Starting read_databricks_file');
+        self::add_diagnostic_log('API: Force refresh: ' . ($force_refresh ? 'yes' : 'no'));
 
         if (empty($file_path)) {
             self::add_diagnostic_log('API: Empty file path provided');
@@ -332,12 +333,19 @@ class TPA_API {
         error_log('TPA API: Reading Databricks file: ' . $file_path);
 
         $cache_key = 'tpa_dbx_file_' . md5($file_path);
-        $cached_data = get_transient($cache_key);
 
-        if ($cached_data !== false) {
-            self::add_diagnostic_log('API: Returning cached data');
-            error_log('TPA API: Returning cached data');
-            return $cached_data;
+        // Skip cache if force refresh is requested
+        if (!$force_refresh) {
+            $cached_data = get_transient($cache_key);
+
+            if ($cached_data !== false) {
+                self::add_diagnostic_log('API: Returning cached data');
+                error_log('TPA API: Returning cached data');
+                return $cached_data;
+            }
+        } else {
+            self::add_diagnostic_log('API: Skipping cache due to force refresh');
+            error_log('TPA API: Skipping cache due to force refresh');
         }
 
         self::add_diagnostic_log('API: No cache, making fresh request');

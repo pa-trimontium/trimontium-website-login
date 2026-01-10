@@ -653,7 +653,18 @@ $display = $atts['display'];
         }
 
         // Load widget data - only loads overview data
-        function loadFileData() {
+        function loadFileData(forceRefresh) {
+            forceRefresh = forceRefresh || false;
+
+            // Clear tab data caches if force refresh
+            if (forceRefresh) {
+                scriptsDataCache = {};
+                fameDataCache = {};
+                chDataCache = {};
+                loadedTabFiles = {};
+                renderedTabs = {};
+            }
+
             $widget.find('.tpa-widget-loading').show();
             $widget.find('.tpa-widget-content').hide();
             $widget.find('.tpa-widget-error').hide();
@@ -668,7 +679,8 @@ $display = $atts['display'];
                 data: {
                     action: 'tpa_load_databricks_file',
                     nonce: tpaAjax.nonce,
-                    file_path: overviewPath
+                    file_path: overviewPath,
+                    force_refresh: forceRefresh ? 'true' : 'false'
                 },
                 success: function(response) {
                     if (response.success) {
@@ -1669,7 +1681,7 @@ $display = $atts['display'];
         });
 
         $widget.find('.tpa-widget-refresh').on('click', function() {
-            loadFileData();
+            loadFileData(true);
         });
 
         // Tab switching

@@ -352,7 +352,9 @@ class TPA_Dashboard {
             $this->add_diagnostic_log('AJAX: Nonce verified');
 
             $file_path = isset($_POST['file_path']) ? sanitize_text_field($_POST['file_path']) : '';
+            $force_refresh = isset($_POST['force_refresh']) && $_POST['force_refresh'] === 'true';
             $this->add_diagnostic_log('AJAX: File path: ' . $file_path);
+            $this->add_diagnostic_log('AJAX: Force refresh: ' . ($force_refresh ? 'yes' : 'no'));
 
             if (empty($file_path)) {
                 $this->add_diagnostic_log('AJAX: File path is empty');
@@ -365,7 +367,7 @@ class TPA_Dashboard {
             error_log('TPA: Loading Databricks file: ' . $file_path);
 
             // Read the file from Databricks
-            $data = TPA_API::read_databricks_file($file_path);
+            $data = TPA_API::read_databricks_file($file_path, $force_refresh);
 
             if (is_wp_error($data)) {
                 $error_msg = $data->get_error_message();
